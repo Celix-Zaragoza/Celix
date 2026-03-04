@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
 import { Button } from "../../../components/ui/button";
@@ -13,23 +13,45 @@ import { deportesDisponibles, zonasZaragoza } from "../../../data/mockData";
 import { toast } from "sonner";
 import { Check, X } from "lucide-react";
 
+type FormData = {
+  nombre: string;
+  alias: string;
+  bio: string;
+  edad: number;
+  zona: string;
+  deportes: string[];
+  nivelGeneral: number;
+};
+
 export default function Page() {
   const { user, updateUser } = useAuth();
   const router = useRouter();
 
+  // Valores iniciales seguros (evitan hooks condicionales)
+  const initialFormData: FormData = useMemo(
+    () => ({
+      nombre: user?.nombre ?? "",
+      alias: user?.alias ?? "",
+      bio: user?.bio ?? "",
+      edad: user?.edad ?? 18,
+      zona: user?.zona ?? zonasZaragoza[0],
+      deportes: user?.deportes ?? [],
+      nivelGeneral: user?.nivelGeneral ?? 50,
+    }),
+    [user]
+  );
+
+  const [formData, setFormData] = useState<FormData>(initialFormData);
+
+  // Si el usuario llega “después”, sincronizamos una vez
+  // (opcional, pero recomendado si user carga async)
+  // Si te da pereza, puedes quitar este useEffect y listo.
+  // import { useEffect } arriba si lo usas.
+  // useEffect(() => { if (user) setFormData(initialFormData); }, [user, initialFormData]);
+
   if (!user) return null;
 
-  const [formData, setFormData] = useState({
-    nombre: user.nombre,
-    alias: user.alias,
-    bio: user.bio || "",
-    edad: user.edad,
-    zona: user.zona,
-    deportes: user.deportes,
-    nivelGeneral: user.nivelGeneral,
-  });
-
-  const handleChange = (field: string, value: any) => {
+  const handleChange = <K extends keyof FormData>(field: K, value: FormData[K]) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
@@ -68,6 +90,8 @@ export default function Page() {
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+          {/* ...el resto igual... */}
+
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             <div className="space-y-2">
               <Label htmlFor="nombre">Nombre completo</Label>
@@ -117,7 +141,7 @@ export default function Page() {
 
             <div className="space-y-2">
               <Label htmlFor="zona">Zona de Zaragoza</Label>
-              <Select value={formData.zona} onValueChange={(value:string) => handleChange("zona", value)}>
+              <Select value={formData.zona} onValueChange={(value) => handleChange("zona", value)}>
                 <SelectTrigger className="h-12">
                   <SelectValue />
                 </SelectTrigger>
@@ -167,7 +191,7 @@ export default function Page() {
             </div>
             <Slider
               value={[formData.nivelGeneral]}
-              onValueChange={(values:number[]) => handleChange("nivelGeneral", values[0])}
+              onValueChange={(values) => handleChange("nivelGeneral", values[0])}
               min={0}
               max={100}
               step={5}
