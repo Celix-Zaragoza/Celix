@@ -112,7 +112,7 @@ export default function Page() {
               <Label htmlFor="zona">Zona de Zaragoza</Label>
               <Select
                 value={formData.zona}
-                onValueChange={(value: any) => setFormData((prev) => ({ ...prev, zona: value }))}
+                onValueChange={(value: string) => setFormData((prev) => ({ ...prev, zona: value }))}
               >
                 <SelectTrigger className="h-12">
                   <SelectValue placeholder="Selecciona tu zona" />

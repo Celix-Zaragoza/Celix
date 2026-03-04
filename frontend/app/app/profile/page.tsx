@@ -37,9 +37,9 @@ export default function Page() {
     { dia: "Dom", actividades: 2 },
   ];
 
-  const deportesData = user.deportes.map((deporte: string) => ({
+  const deportesData = user.deportes.map((deporte: string, index: number) => ({
     name: deporte,
-    value: Math.floor(Math.random() * 30) + 10,
+    value: 10 + (index * 5),
   }));
 
   const COLORS = ["#13ec80", "#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981"];

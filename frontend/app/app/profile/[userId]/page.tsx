@@ -13,7 +13,7 @@ export default function Page() {
   const params = useParams<{ userId: string }>();
   const userId = params?.userId;
 
-  const [isSiguiendo, setIsSiguiendo] = useState(Math.random() > 0.5);
+  const [isSiguiendo, setIsSiguiendo] = useState(false);
 
   const usuario = mockUsuarios.find((u) => String(u.id) === String(userId));
   const publicacionesUsuario = mockPublicaciones.filter((p) => String(p.usuarioId) === String(userId));
@@ -30,7 +30,7 @@ export default function Page() {
   }
 
   const handleToggleSeguir = () => {
-    setIsSiguiendo((prev) => !prev);
+    setIsSiguiendo(Math.random() > 0.5);
     toast.success(isSiguiendo ? "Dejaste de seguir" : "Ahora sigues a " + usuario.nombre);
   };
 

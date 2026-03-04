@@ -21,7 +21,7 @@ export default function Page() {
   const [conversaciones] = useState(mockConversaciones);
 
   const conversacionActual = conversaciones.find((c) => String(c.id) === String(conversationId));
-  const mensajes = conversationId ? (mockMensajes as any)[conversationId] || [] : [];
+  const mensajes = conversationId ? mockMensajes[conversationId] || [] : [];
 
   const filteredConversaciones = searchQuery
     ? conversaciones.filter(
@@ -119,7 +119,7 @@ export default function Page() {
 
             {/* Messages */}
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {mensajes.map((mensaje: any) => {
+              {mensajes.map((mensaje) => {
                 const isOwn = mensaje.remitenteId === user?.id || mensaje.remitenteId === "1";
                 const timeAgo = formatDistanceToNow(new Date(mensaje.fecha), {
                   addSuffix: true,

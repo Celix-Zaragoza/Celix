@@ -140,7 +140,7 @@ export default function Page() {
               </div>
               <Slider
                 value={[nivelGeneral]}
-                onValueChange={(values:any) => setNivelGeneral(values[0])}
+                onValueChange={(values:number[]) => setNivelGeneral(values[0])}
                 min={0}
                 max={100}
                 step={5}
