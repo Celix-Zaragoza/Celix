@@ -1,13 +1,15 @@
-import dotenv from "dotenv";
+import "dotenv/config";
 import app from "./app.js";
 import { connectDB } from "./config/db.js";
 
-dotenv.config();
+const PORT = process.env.PORT ?? 3001;
 
-await connectDB();
+async function main() {
+  await connectDB();
+  app.listen(PORT, () => {
+    console.log(`🚀 CELIX API en http://localhost:${PORT}`);
+    console.log(`📚 Swagger en http://localhost:${PORT}/api-docs`);
+  });
+}
 
-const PORT = process.env.PORT || 3001;
-
-app.listen(PORT, () => {
-  console.log(`API running on port ${PORT}`);
-});
+main();
