@@ -6,12 +6,13 @@ import {
 } from "../../controllers/conversations.controller.js";
 import { requireAuth } from "../../middlewares/auth.middleware.js";
 import { validateBody, validateParams } from "../../middlewares/validate.middleware.js";
+import { loadConversation } from '../../middlewares/conversations.middleware.js'
 import { conversationParamsSchema, sendMessageSchema } from "../../schemas/conversations.schema.js";
 
 const router = Router();
 
 router.get("/", requireAuth, listConversations);
-router.get("/:conversationId/messages", requireAuth, validateParams(conversationParamsSchema), listConversationMessages);
+router.get("/:conversationId/messages", requireAuth, validateParams(conversationParamsSchema), loadConversation, listConversationMessages);
 router.post(
   "/:conversationId/messages",
   requireAuth,
