@@ -1,7 +1,7 @@
 import { z } from "zod";
 
 export const loginSchema = z.object({
-  email: z.string().email("Email inválido").trim().toLowerCase(),
+  email: z.email("Email inválido").trim().toLowerCase(),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(128),
 });
 
@@ -12,7 +12,7 @@ const deporteNivelSchema = z.object({
 
 export const registerSchema = z.object({
   nombre: z.string().trim().min(2, "El nombre es obligatorio").max(120),
-  email: z.string().email("Email inválido").trim().toLowerCase(),
+  email: z.email("Email inválido").trim().toLowerCase(),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(128),
   alias: z.string().trim().min(3).max(40).regex(/^[a-zA-Z0-9_]+$/),
   edad: z.number().int().min(13).max(120).optional(),
