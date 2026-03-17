@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { login, register, getAuthMe } from "../../controllers/auth.controller.js";
+import { login, register, getAuthMe, update_profile } from "../../controllers/auth.controller.js";
 import { requireAuth } from "../../middlewares/auth.middleware.js";
 import { validateBody } from "../../middlewares/validate.middleware.js";
 import { loginSchema, registerSchema } from "../../schemas/auth.schema.js";
@@ -40,6 +40,29 @@ const router = Router();
  *               alias:
  *                 type: string
  *                 example: "maria_zgz"
+ *     responses:
+ *       201:
+ *         description: Usuario creado correctamente
+ *       409:
+ *         description: Email o alias ya en uso
+ */
+router.post("/register", validateBody(registerSchema), register);
+
+/**
+ * @swagger
+ * /api/v1/auth/update-profile:
+ *   patch:
+ *     summary: Actualiza los datos del perfil del usuario
+ *     tags: [Auth]
+ *     security:
+ *       - bearerAuth: []   # indica que requiere token JWT
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
  *               edad:
  *                 type: integer
  *                 example: 28
@@ -58,12 +81,16 @@ const router = Router();
  *                       type: integer
  *                       example: 3
  *     responses:
- *       201:
- *         description: Usuario creado correctamente
- *       409:
- *         description: Email o alias ya en uso
+ *       200:
+ *         description: Perfil actualizado correctamente
+ *       401:
+ *         description: No autenticado o token inválido
+ *       404:
+ *         description: Usuario no encontrado
+ *       400:
+ *         description: Datos inválidos
  */
-router.post("/register", validateBody(registerSchema), register);
+router.patch("/update_profile", update_profile);
 
 /**
  * @swagger

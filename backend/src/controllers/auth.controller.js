@@ -25,8 +25,8 @@ function userPublic(user) {
 
 export const register = async (req, res, next) => {
   try {
-    const { nombre, email, password, alias, edad, zona, deportesNivel = [], nivelGeneral = 0 } = req.body;
-
+    const { nombre, email, password, alias } = req.body;
+    
     const existing = await User.findOne({ $or: [{ email }, { alias }] });
     if (existing) {
       const field = existing.email === email ? "email" : "alias";
@@ -34,12 +34,39 @@ export const register = async (req, res, next) => {
     }
 
     const user = await User.create({
-      nombre, email, password, alias, edad, zona, deportesNivel, nivelGeneral,
-      perfilCompleto: !!(edad && zona && deportesNivel.length > 0),
+      nombre,
+      email,
+      password,
+      alias,
     });
 
+    // Retornamos token y datos básicos
     return res.status(201).json({ ok: true, token: signToken(user._id, user.rol), user: userPublic(user) });
   } catch (err) { next(err); }
+};
+
+export const update_profile = async (req, res, next) => {
+  console.log("update-profile", req.body);
+  try {
+    const { userId, edad, zona, deportesNivel } = req.body;
+
+    const user = await User.findById(userId);
+    if (!user) return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
+
+    // Actualizamos solo los campos que vienen
+    if (edad !== undefined) user.edad = edad;
+    if (zona) user.zona = zona;
+    if (deportesNivel) user.deportesNivel = deportesNivel;
+
+    // Si ya tiene todos los campos importantes, perfilCompleto = true
+    user.perfilCompleto = !!(user.edad && user.zona && user.deportesNivel.length > 0);
+
+    await user.update();
+
+    return res.status(200).json({ ok: true, user: userPublic(user) });
+  } catch (err) {
+    next(err);
+  }
 };
 
 export const login = async (req, res, next) => {

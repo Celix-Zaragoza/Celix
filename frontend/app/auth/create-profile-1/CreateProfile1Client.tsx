@@ -15,9 +15,9 @@ export default function CreateProfile1Client() {
 
   const nombre = searchParams.get("nombre") ?? "";
   const email = searchParams.get("email") ?? "";
+  const alias = searchParams.get("alias") ?? "";
 
   const [formData, setFormData] = useState({
-    alias: "",
     edad: "",
     zona: "",
   });
@@ -32,7 +32,7 @@ export default function CreateProfile1Client() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
-    if (!formData.alias || !formData.edad || !formData.zona) {
+    if (!formData.edad || !formData.zona) {
       toast.error("Por favor, completa todos los campos");
       return;
     }
@@ -46,7 +46,7 @@ export default function CreateProfile1Client() {
     const qs = new URLSearchParams({
       nombre,
       email,
-      alias: formData.alias,
+      alias,
       edad: String(edad),
       zona: formData.zona,
     }).toString();
@@ -74,19 +74,6 @@ export default function CreateProfile1Client() {
           </div>
 
           <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="alias">Alias de usuario</Label>
-              <Input
-                id="alias"
-                name="alias"
-                type="text"
-                placeholder="deportista_zgz"
-                value={formData.alias}
-                onChange={handleChange}
-                className="h-12"
-              />
-              <p className="text-sm text-gray-500">Este será tu nombre de usuario único en CELIX</p>
-            </div>
 
             <div className="space-y-2">
               <Label htmlFor="edad">Edad</Label>

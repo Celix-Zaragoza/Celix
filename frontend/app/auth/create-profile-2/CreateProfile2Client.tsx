@@ -43,24 +43,39 @@ export default function CreateProfile2Client() {
     }
 
     setLoading(true);
-    try {
-      const success = await register({
-        ...userData,
-        deportes,
-        nivelGeneral,
-      });
+     try {
+    // Preparar payload
+    const payload = {
+      edad: userData.edad,
+      zona: userData.zona,
+      deportesNivel: deportes.map((d) => ({ deporte: d, nivel: nivelGeneral })),
+      nivelGeneral,
+    };
 
-      if (success) {
-        toast.success("¡Perfil creado exitosamente!");
-        router.push("/app/feed");
-      } else {
-        toast.error("Error al crear el perfil");
-      }
-    } catch {
-      toast.error("Error al crear el perfil");
-    } finally {
-      setLoading(false);
+    // Llamada a la API para completar perfil
+    const res = await fetch("/api/v1/auth/update_profile", {
+      method: "PATCH",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${localStorage.getItem("token")}`, // token del registro previo
+      },
+      body: JSON.stringify(payload),
+    });
+
+    if (res.status === 200) {
+      toast.success("¡Perfil creado exitosamente!");
+      router.push("/app/feed");
+    } else if (res.status === 401) {
+      toast.error("No autenticado. Por favor, inicia sesión de nuevo.");
+    } else {
+      const data = await res.json();
+      toast.error(data.message || "Error al actualizar perfil");
     }
+  } catch (err) {
+    toast.error("Error al crear el perfil");
+  } finally {
+    setLoading(false);
+  }
   };
 
   const handleBack = () => {
