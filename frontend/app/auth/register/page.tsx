@@ -62,9 +62,10 @@ export default function Page() {
         }),
       });
 
+      const data = await response.json();
       if (response.status === 201) {
+        localStorage.setItem("token", data.token);
         toast.success("¡Cuenta creada exitosamente!");
-
         const qs = new URLSearchParams({
           nombre: formData.nombre,
           email: formData.email,

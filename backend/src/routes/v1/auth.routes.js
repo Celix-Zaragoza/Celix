@@ -50,50 +50,6 @@ router.post("/register", validateBody(registerSchema), register);
 
 /**
  * @swagger
- * /api/v1/auth/update-profile:
- *   patch:
- *     summary: Actualiza los datos del perfil del usuario
- *     tags: [Auth]
- *     security:
- *       - bearerAuth: []   # indica que requiere token JWT
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               edad:
- *                 type: integer
- *                 example: 28
- *               zona:
- *                 type: string
- *                 example: "Centro"
- *               deportesNivel:
- *                 type: array
- *                 items:
- *                   type: object
- *                   properties:
- *                     deporte:
- *                       type: string
- *                       example: "Running"
- *                     nivel:
- *                       type: integer
- *                       example: 3
- *     responses:
- *       200:
- *         description: Perfil actualizado correctamente
- *       401:
- *         description: No autenticado o token inválido
- *       404:
- *         description: Usuario no encontrado
- *       400:
- *         description: Datos inválidos
- */
-router.patch("/update_profile", update_profile);
-
-/**
- * @swagger
  * /api/v1/auth/login:
  *   post:
  *     summary: Inicio de sesión

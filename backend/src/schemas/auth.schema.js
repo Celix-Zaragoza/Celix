@@ -15,8 +15,8 @@ export const registerSchema = z.object({
   email: z.email("Email inválido").trim().toLowerCase(),
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(128),
   alias: z.string().trim().min(3).max(40).regex(/^[a-zA-Z0-9_]+$/),
-  edad: z.number().int().min(13).max(120).optional(),
+  /*edad: z.number().int().min(13).max(120).optional(),
   zona: z.string().trim().min(1).max(120).optional(),
   deportesNivel: z.array(deporteNivelSchema).max(20).optional(),
-  nivelGeneral: z.number().min(0).max(100).optional().default(0),
+  nivelGeneral: z.number().min(0).max(100).optional().default(0),*/
 });

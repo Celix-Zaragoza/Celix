@@ -43,6 +43,8 @@ router.get("/search", requireAuth, searchUsers);
  *   get:
  *     summary: Devuelve el perfil del usuario autenticado
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     responses:
  *       200:
  *         description: Perfil del usuario
@@ -50,7 +52,12 @@ router.get("/search", requireAuth, searchUsers);
  *         description: No autenticado
  *   patch:
  *     summary: Actualiza el perfil del usuario autenticado
+ *     description: >
+ *       Actualiza los datos del perfil. También se usa para completar
+ *       el registro en el paso 2 del onboarding (edad, zona, deportesNivel).
  *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
  *     requestBody:
  *       content:
  *         application/json:
@@ -59,29 +66,55 @@ router.get("/search", requireAuth, searchUsers);
  *             properties:
  *               nombre:
  *                 type: string
+ *                 minLength: 2
+ *                 maxLength: 120
+ *                 example: "María García"
  *               alias:
  *                 type: string
+ *                 minLength: 3
+ *                 maxLength: 40
+ *                 pattern: '^[a-zA-Z0-9_]+$'
+ *                 example: "maria_g"
  *               edad:
  *                 type: integer
+ *                 minimum: 13
+ *                 maximum: 120
+ *                 example: 25
  *               zona:
  *                 type: string
+ *                 example: "Centro"
+ *               bio:
+ *                 type: string
+ *                 maxLength: 300
+ *                 example: "Amante del deporte en Zaragoza"
  *               avatar:
  *                 type: string
+ *                 example: "https://example.com/avatar.jpg"
  *               deportesNivel:
  *                 type: array
  *                 items:
  *                   type: object
+ *                   required: [deporte, nivel]
  *                   properties:
  *                     deporte:
  *                       type: string
+ *                       example: "Fútbol"
  *                     nivel:
  *                       type: integer
+ *                       minimum: 1
+ *                       maximum: 5
+ *                       example: 3
  *     responses:
  *       200:
  *         description: Perfil actualizado
+ *       400:
+ *         description: Datos inválidos
+ *       401:
+ *         description: No autenticado
  *       409:
  *         description: Alias ya en uso
  */
+
 router.get("/me", requireAuth, getMe);
 router.patch("/me", requireAuth, validateBody(updateMeSchema), updateMe);
 
