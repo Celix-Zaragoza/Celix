@@ -9,19 +9,18 @@ export interface User {
   email: string;
   edad: number;
   zona: string;
-  deportes: string[];
-  nivelGeneral: number;
+  deportesNivel?: { deporte: string; nivel: number }[];
   avatar?: string;
   bio?: string;
-  seguidores: number;
-  siguiendo: number;
+  numSeguidores: number;
+  numSiguiendo: number;
   publicaciones: number;
   isAdmin?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
-  login: (email: string, password: string) => Promise<boolean>;
+  login: (user: User) => void;
   register: (userData: Partial<User>) => Promise<boolean>;
   logout: () => void;
   updateUser: (userData: Partial<User>) => void;
@@ -39,28 +38,8 @@ export const useAuth = () => {
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
-  const login = async (email: string, password: string): Promise<boolean> => {
-    if (email && password) {
-      const mockUser: User = {
-        id: "1",
-        alias: "deportista_zaragoza",
-        nombre: "Ana García",
-        email,
-        edad: 28,
-        zona: "Centro",
-        deportes: ["Fútbol", "Running", "Natación"],
-        nivelGeneral: 75,
-        avatar: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400",
-        bio: "🏃‍♀️ Amante del deporte y la vida saludable en Zaragoza",
-        seguidores: 342,
-        siguiendo: 189,
-        publicaciones: 87,
-        isAdmin: email.includes("admin"),
-      };
-      setUser(mockUser);
-      return true;
-    }
-    return false;
+  const login = (userData: User) => {
+      setUser(userData);
   };
 
   const register = async (userData: Partial<User>): Promise<boolean> => {
@@ -71,12 +50,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       email: userData.email || "",
       edad: userData.edad || 0,
       zona: userData.zona || "",
-      deportes: userData.deportes || [],
-      nivelGeneral: userData.nivelGeneral || 50,
+      deportesNivel: userData.deportesNivel || [],
       avatar: userData.avatar,
       bio: userData.bio || "",
-      seguidores: 0,
-      siguiendo: 0,
+      numSeguidores: 0,
+      numSiguiendo: 0,
       publicaciones: 0,
       isAdmin: false,
     };

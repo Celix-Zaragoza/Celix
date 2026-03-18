@@ -13,5 +13,4 @@ export const updateMeSchema = z.object({
   bio: z.string().trim().max(300).optional(),
   avatar: z.string().trim().optional(),
   deportesNivel: z.array(deporteNivelSchema).min(1).max(20).optional(),
-  nivelGeneral: z.number().min(0).max(100).optional(),
 });

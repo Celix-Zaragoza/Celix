@@ -6,6 +6,7 @@ function userPublic(user, currentUserId) {
     id: user._id,
     nombre: user.nombre,
     alias: user.alias,
+    edad: user.edad,
     zona: user.zona,
     deportesNivel: user.deportesNivel,
     nivelGeneral: user.nivelGeneral,
