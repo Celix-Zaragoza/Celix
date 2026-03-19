@@ -2,32 +2,76 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Publicacion } from "../data/mockData";
-import { Heart, MessageCircle, Share2, MapPin, MoreVertical } from "lucide-react";
+import { Heart, MessageCircle, MapPin, MoreVertical } from "lucide-react";
 import { Button } from "./ui/button";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 
 interface PublicationCardProps {
-  publicacion: Publicacion;
+  publicacion: any;
 }
 
+const API = "http://localhost:3001/api/v1";
+
 export const PublicationCard = ({ publicacion }: PublicationCardProps) => {
-  const [liked, setLiked] = useState(publicacion.hasLiked || false);
-  const [likes, setLikes] = useState(publicacion.likes);
+  const autor = publicacion.autor ?? {};
+  const nombre = autor.nombre ?? publicacion.usuarioNombre ?? "Usuario";
+  const alias = autor.alias ?? publicacion.usuarioAlias ?? "";
+  const avatar =
+    autor.avatar ??
+    publicacion.usuarioAvatar ??
+    `https://api.dicebear.com/7.x/initials/svg?seed=${nombre}`;
+  const autorId = autor._id ?? autor.id ?? publicacion.usuarioId ?? "";
+  const fecha = publicacion.createdAt ?? publicacion.fecha;
+  const postId = publicacion._id ?? publicacion.id;
+
+  // La API devuelve hasLiked y numLikes directamente
+  // Si viene del mock (likes es array sin hasLiked), usamos valores por defecto
+  const initialHasLiked: boolean = publicacion.hasLiked ?? false;
+  const initialLikes: number =
+    publicacion.numLikes ?? publicacion.likes?.length ?? publicacion.likes ?? 0;
+
+  const [liked, setLiked] = useState<boolean>(initialHasLiked);
+  const [likes, setLikes] = useState<number>(initialLikes);
+
   const router = useRouter();
 
-  const handleLike = () => {
-    setLikes((prev) => (liked ? prev - 1 : prev + 1));
-    setLiked((prev) => !prev);
+  const handleLike = async () => {
+    if (!postId) return;
+
+    const token = localStorage.getItem("token");
+    if (!token) return;
+
+    // Optimistic update
+    const wasLiked = liked;
+    setLiked(!wasLiked);
+    setLikes((prev) => (wasLiked ? prev - 1 : prev + 1));
+
+    try {
+      const res = await fetch(`${API}/posts/${postId}/like`, {
+        method: wasLiked ? "DELETE" : "POST",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+
+      if (!res.ok) {
+        // Revertir si falla
+        setLiked(wasLiked);
+        setLikes((prev) => (wasLiked ? prev + 1 : prev - 1));
+      }
+    } catch {
+      // Revertir si hay error de red
+      setLiked(wasLiked);
+      setLikes((prev) => (wasLiked ? prev + 1 : prev - 1));
+    }
   };
 
-  const timeAgo = formatDistanceToNow(new Date(publicacion.fecha), {
-    addSuffix: true,
-    locale: es,
-  });
+  const timeAgo = fecha
+    ? formatDistanceToNow(new Date(fecha), { addSuffix: true, locale: es })
+    : "";
 
-  const goProfile = () => router.push(`/app/profile/${publicacion.usuarioId}`);
+  const goProfile = () => {
+    if (autorId) router.push(`/app/profile/${autorId}`);
+  };
 
   return (
     <div className="bg-[#1e293b] rounded-xl shadow-sm border border-[rgba(148,163,184,0.2)] overflow-hidden hover:shadow-md transition-shadow">
@@ -36,69 +80,82 @@ export const PublicationCard = ({ publicacion }: PublicationCardProps) => {
         <div className="flex items-start justify-between mb-3">
           <div className="flex items-center gap-3">
             <img
-              src={publicacion.usuarioAvatar}
-              alt={publicacion.usuarioNombre}
-              className="w-12 h-12 rounded-full object-cover cursor-pointer hover:opacity-80 transition-opacity"
-              onClick={goProfile}
+              src={avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${nombre}`}
+              alt={nombre}
+              className="w-14 h-14 rounded-full object-cover border-4 border-[#13ec80]"
             />
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-bold text-[#f1f5f9] cursor-pointer hover:underline" onClick={goProfile}>
-                  {publicacion.usuarioNombre}
+                <h3
+                  className="font-bold text-[#f1f5f9] cursor-pointer hover:underline"
+                  onClick={goProfile}
+                >
+                  {nombre}
                 </h3>
                 <span className="px-2 py-0.5 bg-[#13ec80] text-[#102219] text-xs font-medium rounded-full">
                   {publicacion.deporte}
                 </span>
               </div>
-              <p className="text-sm text-[#94a3b8]">@{publicacion.usuarioAlias}</p>
+              {alias && <p className="text-sm text-[#94a3b8]">@{alias}</p>}
               <div className="flex items-center gap-1 text-xs text-[#94a3b8] mt-1">
-                <MapPin className="w-3 h-3" />
-                <span>{publicacion.ubicacion}</span>
-                <span>•</span>
+                {publicacion.ubicacion && (
+                  <>
+                    <MapPin className="w-3 h-3" />
+                    <span>{publicacion.ubicacion}</span>
+                    <span>•</span>
+                  </>
+                )}
                 <span>{timeAgo}</span>
               </div>
             </div>
           </div>
-          <Button variant="ghost" size="sm" className="text-[#94a3b8] hover:text-[#f1f5f9]">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="text-[#94a3b8] hover:text-[#f1f5f9]"
+          >
             <MoreVertical className="w-5 h-5" />
           </Button>
         </div>
 
-        {/* Content */}
-        <p className="text-[#f1f5f9] mb-3 leading-relaxed">{publicacion.contenido}</p>
+        {/* Contenido */}
+        <p className="text-[#f1f5f9] mb-3 leading-relaxed">
+          {publicacion.contenido}
+        </p>
       </div>
 
-      {/* Image */}
+      {/* Imagen */}
       {publicacion.imagen && (
-        <div className="w-full aspect-video bg-gray-100">
-          <img src={publicacion.imagen} alt="Publicación" className="w-full h-full object-cover" />
+        <div className="w-full aspect-video bg-[#0f172a]">
+          <img
+            src={publicacion.imagen}
+            alt="Publicación"
+            className="w-full h-full object-cover"
+          />
         </div>
       )}
 
-      {/* Actions */}
+      {/* Acciones */}
       <div className="p-4 border-t border-[rgba(148,163,184,0.2)]">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-6">
-            <button
-              onClick={handleLike}
-              className={`flex items-center gap-2 transition-colors ${
-                liked ? "text-[#13ec80]" : "text-[#94a3b8] hover:text-[#13ec80]"
-              }`}
-            >
-              <Heart className={`w-6 h-6 ${liked ? "fill-current" : ""}`} />
-              <span className="font-medium">{likes}</span>
-            </button>
+        <div className="flex items-center gap-6">
+          <button
+            onClick={handleLike}
+            className={`flex items-center gap-2 transition-colors ${
+              liked
+                ? "text-[#13ec80]"
+                : "text-[#94a3b8] hover:text-[#13ec80]"
+            }`}
+          >
+            <Heart className={`w-6 h-6 ${liked ? "fill-current" : ""}`} />
+            <span className="font-medium">{likes}</span>
+          </button>
 
-            <button className="flex items-center gap-2 text-[#94a3b8] hover:text-[#13ec80] transition-colors">
-              <MessageCircle className="w-6 h-6" />
-              <span className="font-medium">{publicacion.comentarios}</span>
-            </button>
-
-            <button className="flex items-center gap-2 text-[#94a3b8] hover:text-[#13ec80] transition-colors">
-              <Share2 className="w-6 h-6" />
-              <span className="font-medium">{publicacion.compartidos}</span>
-            </button>
-          </div>
+          <button className="flex items-center gap-2 text-[#94a3b8] hover:text-[#13ec80] transition-colors">
+            <MessageCircle className="w-6 h-6" />
+            <span className="font-medium">
+              {publicacion.comentarios ?? publicacion.numComentarios ?? 0}
+            </span>
+          </button>
         </div>
       </div>
     </div>

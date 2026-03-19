@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/button";
@@ -17,7 +17,10 @@ export default function Page() {
   const { user, updateUser } = useAuth();
   const router = useRouter();
 
-  // Cargar datos reales al montar
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+
+  // Cargar perfil propio
   useEffect(() => {
     const fetchMe = async () => {
       try {
@@ -26,11 +29,7 @@ export default function Page() {
         });
         if (res.ok) {
           const data = await res.json();
-          console.log("Datos de usuario:", data);
-          updateUser({
-            ...data.user,
-            isAdmin: data.user.rol === "ADMIN",
-          });
+          updateUser({ ...data.user, isAdmin: data.user.rol === "ADMIN" });
         }
       } catch {
         // usa los datos del contexto si falla
@@ -39,13 +38,37 @@ export default function Page() {
     fetchMe();
   }, []);
 
+  // Cargar posts del usuario cuando tengamos su ID
+  useEffect(() => {
+    if (!user?.id && !user?.id) return;
+
+    const fetchPosts = async () => {
+      setLoadingPosts(true);
+      try {
+        const userId = user.id;
+        const res = await fetch(`${API}/posts/user/${userId}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setPosts(data.posts ?? []);
+        }
+      } catch {
+        // silencioso
+      } finally {
+        setLoadingPosts(false);
+      }
+    };
+
+    fetchPosts();
+  }, [user?.id]);
+
   if (!user) return null;
 
-  // Adaptar deportesNivel (API) → deportesData para el gráfico
   const deportesNivel = user.deportesNivel ?? [];
   const deportesData = deportesNivel.map((d: any) => ({
     name: d.deporte,
-    value: d.nivel * 20, // nivel 1-5 → 20-100 para el gráfico
+    value: d.nivel * 20,
   }));
 
   const activityData = [
@@ -111,6 +134,10 @@ export default function Page() {
                 <span className="font-bold text-[#f1f5f9]">{user.numSiguiendo ?? 0}</span>
                 <span className="text-[#94a3b8] ml-1">Siguiendo</span>
               </button>
+              <div className="text-center">
+                <span className="font-bold text-[#f1f5f9]">{posts.length}</span>
+                <span className="text-[#94a3b8] ml-1">Publicaciones</span>
+              </div>
             </div>
           </div>
         </div>
@@ -129,7 +156,6 @@ export default function Page() {
 
       {/* Statistics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Weekly Activity */}
         <div className="bg-[#1e293b] rounded-xl shadow-sm border border-[rgba(148,163,184,0.2)] p-6">
           <div className="flex items-center gap-2 mb-6">
             <TrendingUp className="w-5 h-5 text-[#13ec80]" />
@@ -149,7 +175,6 @@ export default function Page() {
           </ResponsiveContainer>
         </div>
 
-        {/* Sports Distribution */}
         <div className="bg-[#1e293b] rounded-xl shadow-sm border border-[rgba(148,163,184,0.2)] p-6">
           <div className="flex items-center gap-2 mb-6">
             <BarChart3 className="w-5 h-5 text-[#13ec80]" />
@@ -183,18 +208,36 @@ export default function Page() {
         </div>
       </div>
 
-      {/* My Publications — pendiente conectar con API cuando estén los posts */}
+      {/* My Publications */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-[#f1f5f9] mb-4">Mis Publicaciones</h2>
-        <div className="bg-[#1e293b] rounded-xl shadow-sm border border-[rgba(148,163,184,0.2)] p-12 text-center">
-          <p className="text-[#94a3b8] mb-4">Aún no has creado ninguna publicación</p>
-          <Button
-            onClick={() => router.push("/app/create-post")}
-            className="bg-[#13ec80] text-[#102219] hover:bg-[#10d671]"
-          >
-            Crear primera publicación
-          </Button>
-        </div>
+
+        {loadingPosts ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-[#1e293b] rounded-xl border border-[rgba(148,163,184,0.2)] h-48 animate-pulse"
+              />
+            ))}
+          </div>
+        ) : posts.length > 0 ? (
+          <div className="space-y-4">
+            {posts.map((post) => (
+              <PublicationCard key={post._id?.toString() ?? post.id} publicacion={post} />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-[#1e293b] rounded-xl shadow-sm border border-[rgba(148,163,184,0.2)] p-12 text-center">
+            <p className="text-[#94a3b8] mb-4">Aún no has creado ninguna publicación</p>
+            <Button
+              onClick={() => router.push("/app/create-post")}
+              className="bg-[#13ec80] text-[#102219] hover:bg-[#10d671]"
+            >
+              Crear primera publicación
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );

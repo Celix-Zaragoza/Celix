@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
 import { Button } from "../../../components/ui/button";
+import { PublicationCard } from "../../../components/PublicationCard";
 import { MapPin, Calendar, MessageCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -27,6 +28,8 @@ export default function Page() {
   const [seguidores, setSeguidores] = useState(false);
   const [loading, setLoading] = useState(true);
   const [loadingFollow, setLoadingFollow] = useState(false);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
 
   useEffect(() => {
     if (!userId) return;
@@ -59,6 +62,30 @@ export default function Page() {
 
     fetchUsuario();
   }, [userId, me?.id]);
+
+   // Cargar posts del usuario cuando tengamos su ID
+    useEffect(() => {
+      if (!userId ) return;
+  
+      const fetchPosts = async () => {
+        setLoadingPosts(true);
+        try {
+          const res = await fetch(`${API}/posts/user/${userId}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setPosts(data.posts ?? []);
+          }
+        } catch {
+          // silencioso
+        } finally {
+          setLoadingPosts(false);
+        }
+      };
+  
+      fetchPosts();
+    }, [userId]);
 
   const handleToggleSeguir = async () => {
     if (!usuario) return;
@@ -200,12 +227,36 @@ export default function Page() {
         )}
       </div>
 
-      {/* Publicaciones — pendiente hasta implementar posts */}
-      <div>
-        <h2 className="text-xl font-bold text-[#f1f5f9] mb-4">Publicaciones</h2>
-        <div className="bg-[#1e293b] rounded-xl border border-[rgba(148,163,184,0.2)] p-12 text-center">
-          <p className="text-[#94a3b8]">Las publicaciones estarán disponibles próximamente</p>
-        </div>
+      {/* My Publications */}
+      <div className="mb-6">
+        <h2 className="text-2xl font-bold text-[#f1f5f9] mb-4">Mis Publicaciones</h2>
+
+        {loadingPosts ? (
+          <div className="space-y-4">
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-[#1e293b] rounded-xl border border-[rgba(148,163,184,0.2)] h-48 animate-pulse"
+              />
+            ))}
+          </div>
+        ) : posts.length > 0 ? (
+          <div className="space-y-4">
+            {posts.map((post) => (
+              <PublicationCard key={post._id?.toString() ?? post.id} publicacion={post} />
+            ))}
+          </div>
+        ) : (
+          <div className="bg-[#1e293b] rounded-xl shadow-sm border border-[rgba(148,163,184,0.2)] p-12 text-center">
+            <p className="text-[#94a3b8] mb-4">Aún no has creado ninguna publicación</p>
+            <Button
+              onClick={() => router.push("/app/create-post")}
+              className="bg-[#13ec80] text-[#102219] hover:bg-[#10d671]"
+            >
+              Crear primera publicación
+            </Button>
+          </div>
+        )}
       </div>
     </div>
   );
