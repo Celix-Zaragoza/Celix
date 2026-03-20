@@ -5,10 +5,10 @@ export const loginSchema = z.object({
   password: z.string().min(6, "La contraseña debe tener al menos 6 caracteres").max(128),
 });
 
-const deporteNivelSchema = z.object({
+/*const deporteNivelSchema = z.object({
   deporte: z.string().trim().min(1).max(80),
   nivel: z.number().int().min(1).max(5).default(1),
-});
+});*/
 
 export const registerSchema = z.object({
   nombre: z.string().trim().min(2, "El nombre es obligatorio").max(120),
