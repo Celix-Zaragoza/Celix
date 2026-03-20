@@ -1,30 +1,71 @@
 "use client";
 
 import { useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { mockUsuarios } from "../../data/mockData";
 import { Input } from "../../components/ui/input";
 import { Button } from "../../components/ui/button";
 import { Search, UserPlus } from "lucide-react";
 
+type DeporteNivel = {
+  deporte: string;
+  nivel: string;
+};
+
+type Usuario = {
+  id: string;
+  nombre: string;
+  alias: string;
+  avatar: string;
+  deportesNivel: DeporteNivel[];
+  numSeguidores: number;
+  numSiguiendo: number;
+  siguiendo: boolean;
+  zona: string;
+};
+
 export default function Page() {
   const [searchQuery, setSearchQuery] = useState("");
-  const [usuarios, setUsuarios] = useState(mockUsuarios);
+  const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const router = useRouter();
+  const token = localStorage.getItem("token");
+
+
+  useEffect(() => {
+    const delayDebounce = setTimeout(() => {
+      if (searchQuery.trim() === "") {
+        setUsuarios([]);
+      } else {
+        fetchUsuarios(searchQuery);
+      }
+    }, 400); // 400ms es un buen equilibrio
+
+    return () => clearTimeout(delayDebounce);
+  }, [searchQuery]);
+
+  const fetchUsuarios = async (query: string) => {
+    try {
+      const res = await fetch(`http://localhost:3001/api/v1/users/search?q=${query}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      if (!res.ok) {
+        console.error("Error al buscar usuarios:", res.statusText);
+        throw new Error("Error al buscar usuarios");
+      }
+      const data = await res.json();
+      console.log("Usuarios encontrados:", data.users);
+      setUsuarios(data.users);
+      console.log("Usuarios actualizados en estado:", usuarios);
+    } catch (error) {
+      console.error(error);
+      setUsuarios([]);
+    }
+  };
 
   const handleSearch = (query: string) => {
     setSearchQuery(query);
-    if (query.trim() === "") {
-      setUsuarios(mockUsuarios);
-    } else {
-      const filtered = mockUsuarios.filter(
-        (u) =>
-          u.nombre.toLowerCase().includes(query.toLowerCase()) ||
-          u.alias.toLowerCase().includes(query.toLowerCase()) ||
-          u.deportes.some((d) => d.toLowerCase().includes(query.toLowerCase()))
-      );
-      setUsuarios(filtered);
-    }
   };
 
   const goProfile = (id: string | number) => router.push(`/app/profile/${id}`);
@@ -58,10 +99,9 @@ export default function Page() {
             >
               <div className="flex items-center gap-4">
                 <img
-                  src={usuario.avatar}
+                  src={usuario.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${usuario.nombre}`}
                   alt={usuario.nombre}
-                  className="w-16 h-16 rounded-full object-cover cursor-pointer"
-                  onClick={() => goProfile(usuario.id)}
+                  className="w-20 h-20 rounded-full object-cover border-4 border-[#13ec80]/30"
                 />
                 <div className="flex-1">
                   <h3
@@ -72,12 +112,12 @@ export default function Page() {
                   </h3>
                   <p className="text-sm text-[#94a3b8]">@{usuario.alias}</p>
                   <div className="flex flex-wrap gap-1 mt-2">
-                    {usuario.deportes.slice(0, 3).map((deporte) => (
+                    {usuario.deportesNivel?.slice(0, 3).map((d) => (
                       <span
-                        key={deporte}
+                        key={d.deporte}
                         className="px-2 py-0.5 bg-[#13ec80] text-[#102219] text-xs font-medium rounded-full"
                       >
-                        {deporte}
+                        {d.deporte}
                       </span>
                     ))}
                   </div>

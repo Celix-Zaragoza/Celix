@@ -14,6 +14,7 @@ export default function Page() {
     email: "",
     password: "",
     confirmPassword: "",
+    alias: "",
   });
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
@@ -48,20 +49,37 @@ export default function Page() {
 
     setLoading(true);
     try {
-      // Simular registro exitoso
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      toast.success("¡Cuenta creada exitosamente!");
+      const response = await fetch("http://localhost:3001/api/v1/auth/register", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          nombre: formData.nombre,
+          email: formData.email,
+          password: formData.password,
+          alias: formData.alias,
+        }),
+      });
 
-      // Next no tiene navigate state como React Router.
-      // Pasamos datos NO sensibles por querystring:
-      const qs = new URLSearchParams({
-        nombre: formData.nombre,
-        email: formData.email,
-      }).toString();
+      const data = await response.json();
+      if (response.status === 201) {
+        localStorage.setItem("token", data.token);
+        toast.success("¡Cuenta creada exitosamente!");
+        const qs = new URLSearchParams({
+          nombre: formData.nombre,
+          email: formData.email,
+          alias: formData.alias,
+        }).toString();
 
-      router.push(`/auth/create-profile-1?${qs}`);
-    } catch {
-      toast.error("Error al crear la cuenta");
+        router.push(`/auth/create-profile-1?${qs}`);
+      } else if (response.status === 409) {
+        toast.error("El email o alias ya está en uso");
+      } else {
+        toast.error("Error al crear la cuenta");
+      }
+    } catch (error) {
+      toast.error("Error de conexión con el servidor");
     } finally {
       setLoading(false);
     }
@@ -100,6 +118,19 @@ export default function Page() {
                 type="email"
                 placeholder="tu@email.com"
                 value={formData.email}
+                onChange={handleChange}
+                className="h-12"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="alias">Alias</Label>
+              <Input
+                id="alias"
+                name="alias"
+                type="text"
+                placeholder="Tu alias"
+                value={formData.alias}
                 onChange={handleChange}
                 className="h-12"
               />

@@ -1,27 +1,133 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
-import { mockUsuarios, mockPublicaciones } from "../../../data/mockData";
+import { useAuth } from "../../../context/AuthContext";
 import { Button } from "../../../components/ui/button";
 import { PublicationCard } from "../../../components/PublicationCard";
-import { MapPin, Calendar, MessageCircle } from "lucide-react";
+import { MapPin, Calendar, MessageCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+
+const API = "http://localhost:3001/api/v1";
+
+function authHeaders() {
+  return {
+    "Content-Type": "application/json",
+    Authorization: `Bearer ${localStorage.getItem("token")}`,
+  };
+}
 
 export default function Page() {
   const router = useRouter();
+  const { user: me } = useAuth();
   const params = useParams<{ userId: string }>();
   const userId = params?.userId;
 
-  const [isSiguiendo, setIsSiguiendo] = useState(false);
+  const [usuario, setUsuario] = useState<any>(null);
+  const [siguiendo, setSiguiendo] = useState(false);
+  const [seguidores, setSeguidores] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loadingFollow, setLoadingFollow] = useState(false);
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
 
-  const usuario = mockUsuarios.find((u) => String(u.id) === String(userId));
-  const publicacionesUsuario = mockPublicaciones.filter((p) => String(p.usuarioId) === String(userId));
+  useEffect(() => {
+    if (!userId) return;
+
+    // Si es mi propio perfil, redirigir
+    if (me?.id && userId === me.id) {
+      router.replace("/app/profile");
+      return;
+    }
+
+    const fetchUsuario = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`${API}/users/${userId}`, { headers: authHeaders() });
+        if (!res.ok) {
+          toast.error("Usuario no encontrado");
+          router.push("/app/feed");
+          return;
+        }
+        const data = await res.json();
+        setUsuario(data.user);
+        setSiguiendo(data.user.siguiendo ?? false);
+        setSeguidores(data.user.seguidores ?? false);
+      } catch {
+        toast.error("Error al cargar el perfil");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUsuario();
+  }, [userId, me?.id]);
+
+   // Cargar posts del usuario cuando tengamos su ID
+    useEffect(() => {
+      if (!userId ) return;
+  
+      const fetchPosts = async () => {
+        setLoadingPosts(true);
+        try {
+          const res = await fetch(`${API}/posts/user/${userId}`, {
+            headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+          });
+          if (res.ok) {
+            const data = await res.json();
+            setPosts(data.posts ?? []);
+          }
+        } catch {
+          // silencioso
+        } finally {
+          setLoadingPosts(false);
+        }
+      };
+  
+      fetchPosts();
+    }, [userId]);
+
+  const handleToggleSeguir = async () => {
+    if (!usuario) return;
+    setLoadingFollow(true);
+    try {
+      const method = siguiendo ? "DELETE" : "POST";
+      const res = await fetch(`${API}/users/${userId}/follow`, {
+        method,
+        headers: authHeaders(),
+      });
+      if (res.ok) {
+        setSiguiendo(!siguiendo);
+        setUsuario((prev: any) => ({
+          ...prev,
+          numSeguidores: siguiendo ? prev.numSeguidores - 1 : prev.numSeguidores + 1,
+        }));
+        toast.success(
+          siguiendo ? `Dejaste de seguir a ${usuario.nombre}` : `Ahora sigues a ${usuario.nombre}`
+        );
+      } else {
+        const data = await res.json();
+        toast.error(data.message || "Error al actualizar seguimiento");
+      }
+    } catch {
+      toast.error("Error de conexión");
+    } finally {
+      setLoadingFollow(false);
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-24">
+        <Loader2 className="w-8 h-8 animate-spin text-[#13ec80]" />
+      </div>
+    );
+  }
 
   if (!usuario) {
     return (
       <div className="text-center py-12">
-        <p className="text-gray-600">Usuario no encontrado</p>
+        <p className="text-[#94a3b8]">Usuario no encontrado</p>
         <Button onClick={() => router.push("/app/feed")} className="mt-4">
           Volver al feed
         </Button>
@@ -29,102 +135,126 @@ export default function Page() {
     );
   }
 
-  const handleToggleSeguir = () => {
-    setIsSiguiendo(Math.random() > 0.5);
-    toast.success(isSiguiendo ? "Dejaste de seguir" : "Ahora sigues a " + usuario.nombre);
-  };
-
-  const handleMessage = () => {
-    router.push("/app/messages");
-    toast.info("Función de mensajería próximamente");
-  };
+  const deportesNivel = usuario.deportesNivel ?? [];
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       {/* Profile Header */}
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+      <div className="bg-[#1e293b] rounded-xl border border-[rgba(148,163,184,0.2)] p-6 mb-6">
         <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
           <img
-            src={usuario.avatar}
+            src={usuario.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${usuario.nombre}`}
             alt={usuario.nombre}
-            className="w-32 h-32 rounded-full object-cover border-4 border-blue-100"
+            className="w-28 h-28 rounded-full object-cover border-4 border-[#13ec80]/30"
           />
           <div className="flex-1">
+            {/* Nombre + botones */}
             <div className="flex flex-col md:flex-row md:items-center md:justify-between mb-3">
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">{usuario.nombre}</h1>
-                <p className="text-gray-600">@{usuario.alias}</p>
+                <h1 className="text-2xl font-bold text-[#f1f5f9]">{usuario.nombre}</h1>
+                <p className="text-[#94a3b8]">@{usuario.alias}</p>
               </div>
               <div className="flex gap-2 mt-3 md:mt-0">
                 <Button
                   onClick={handleToggleSeguir}
-                  variant={isSiguiendo ? "outline" : "default"}
-                  className={isSiguiendo ? "border-2 border-gray-300" : ""}
+                  disabled={loadingFollow}
+                  className={
+                    siguiendo
+                      ? "border border-[#334155] bg-transparent text-[#94a3b8] hover:bg-[#334155] hover:text-white"
+                      : "bg-[#13ec80] text-[#102219] hover:bg-[#10d671]"
+                  }
                 >
-                  {isSiguiendo ? "Siguiendo" : "Seguir"}
+                  {loadingFollow
+                    ? <Loader2 className="w-4 h-4 animate-spin" />
+                    : siguiendo ? "Siguiendo" : "Seguir"
+                  }
                 </Button>
-                <Button onClick={handleMessage} variant="outline">
+                <Button
+                  variant="outline"
+                  className="border-[#334155] text-[#94a3b8] hover:bg-[#334155]"
+                  onClick={() => router.push("/app/messages")}
+                >
                   <MessageCircle className="w-4 h-4 mr-2" />
                   Mensaje
                 </Button>
               </div>
             </div>
 
-            <div className="flex items-center gap-4 text-sm text-gray-600 mb-4">
-              <div className="flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
-                <span>{usuario.zona}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                <span>{usuario.edad} años</span>
-              </div>
+            {/* Info */}
+            <div className="flex flex-wrap items-center gap-4 text-sm text-[#94a3b8] mb-3">
+              {usuario.zona && (
+                <div className="flex items-center gap-1">
+                  <MapPin className="w-4 h-4" />
+                  <span>{usuario.zona}</span>
+                </div>
+              )}
+              {usuario.edad && (
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  <span>{usuario.edad} años</span>
+                </div>
+              )}
             </div>
 
-            <p className="text-gray-700 mb-4">{usuario.bio}</p>
+            {usuario.bio && <p className="text-[#f1f5f9] mb-4">{usuario.bio}</p>}
 
+            {/* Contadores */}
             <div className="flex gap-6">
               <div className="text-center">
-                <span className="font-bold text-gray-900">{usuario.seguidores}</span>
-                <span className="text-gray-600 ml-1">Seguidores</span>
+                <span className="font-bold text-[#f1f5f9]">{usuario.numSeguidores ?? 0}</span>
+                <span className="text-[#94a3b8] ml-1 text-sm">Seguidores</span>
               </div>
               <div className="text-center">
-                <span className="font-bold text-gray-900">{usuario.siguiendo}</span>
-                <span className="text-gray-600 ml-1">Siguiendo</span>
-              </div>
-              <div className="text-center">
-                <span className="font-bold text-gray-900">{usuario.publicaciones}</span>
-                <span className="text-gray-600 ml-1">Publicaciones</span>
+                <span className="font-bold text-[#f1f5f9]">{usuario.numSiguiendo ?? 0}</span>
+                <span className="text-[#94a3b8] ml-1 text-sm">Siguiendo</span>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Sports Tags */}
-        <div className="flex flex-wrap gap-2 mt-6 pt-6 border-t border-gray-100">
-          {usuario.deportes.map((deporte: string) => (
-            <span key={deporte} className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-sm font-medium">
-              {deporte}
-            </span>
-          ))}
-          <span className="px-3 py-1 bg-green-50 text-green-700 rounded-full text-sm font-medium">
-            Nivel: {usuario.nivelGeneral}%
-          </span>
-        </div>
+        {/* Deportes */}
+        {deportesNivel.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-6 pt-6 border-t border-[rgba(148,163,184,0.1)]">
+            {deportesNivel.map((d: any) => (
+              <span
+                key={d.deporte}
+                className="px-3 py-1 bg-[#13ec80]/10 text-[#13ec80] border border-[#13ec80]/20 rounded-full text-sm font-medium"
+              >
+                {d.deporte} · Nv.{d.nivel}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
-      {/* Publications */}
+      {/* My Publications */}
       <div className="mb-6">
-        <h2 className="text-2xl font-bold text-gray-900 mb-4">Publicaciones</h2>
-        {publicacionesUsuario.length > 0 ? (
+        <h2 className="text-2xl font-bold text-[#f1f5f9] mb-4">Mis Publicaciones</h2>
+
+        {loadingPosts ? (
           <div className="space-y-4">
-            {publicacionesUsuario.map((publicacion) => (
-              <PublicationCard key={publicacion.id} publicacion={publicacion} />
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-[#1e293b] rounded-xl border border-[rgba(148,163,184,0.2)] h-48 animate-pulse"
+              />
+            ))}
+          </div>
+        ) : posts.length > 0 ? (
+          <div className="space-y-4">
+            {posts.map((post) => (
+              <PublicationCard key={post._id?.toString() ?? post.id} publicacion={post} />
             ))}
           </div>
         ) : (
-          <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
-            <p className="text-gray-500">Este usuario aún no ha creado publicaciones</p>
+          <div className="bg-[#1e293b] rounded-xl shadow-sm border border-[rgba(148,163,184,0.2)] p-12 text-center">
+            <p className="text-[#94a3b8] mb-4">Aún no has creado ninguna publicación</p>
+            <Button
+              onClick={() => router.push("/app/create-post")}
+              className="bg-[#13ec80] text-[#102219] hover:bg-[#10d671]"
+            >
+              Crear primera publicación
+            </Button>
           </div>
         )}
       </div>

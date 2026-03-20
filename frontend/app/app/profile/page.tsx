@@ -1,31 +1,75 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
 import { Button } from "../../components/ui/button";
 import { PublicationCard } from "../../components/PublicationCard";
-import { mockPublicaciones } from "../../data/mockData";
 import { Edit, MapPin, Calendar, TrendingUp, BarChart3 } from "lucide-react";
 import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
+  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+  PieChart, Pie, Cell,
 } from "recharts";
 
+const API = "http://localhost:3001/api/v1";
+
 export default function Page() {
-  const { user } = useAuth();
+  const { user, updateUser } = useAuth();
   const router = useRouter();
+
+  const [posts, setPosts] = useState<any[]>([]);
+  const [loadingPosts, setLoadingPosts] = useState(true);
+
+  // Cargar perfil propio
+  useEffect(() => {
+    const fetchMe = async () => {
+      try {
+        const res = await fetch(`${API}/users/me`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          updateUser({ ...data.user, isAdmin: data.user.rol === "ADMIN" });
+        }
+      } catch {
+        // usa los datos del contexto si falla
+      }
+    };
+    fetchMe();
+  }, []);
+
+  // Cargar posts del usuario cuando tengamos su ID
+  useEffect(() => {
+    if (!user?.id && !user?.id) return;
+
+    const fetchPosts = async () => {
+      setLoadingPosts(true);
+      try {
+        const userId = user.id;
+        const res = await fetch(`${API}/posts/user/${userId}`, {
+          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+        });
+        if (res.ok) {
+          const data = await res.json();
+          setPosts(data.posts ?? []);
+        }
+      } catch {
+        // silencioso
+      } finally {
+        setLoadingPosts(false);
+      }
+    };
+
+    fetchPosts();
+  }, [user?.id]);
 
   if (!user) return null;
 
-  const myPublicaciones = mockPublicaciones.filter((p) => String(p.usuarioId) === String(user.id));
+  const deportesNivel = user.deportesNivel ?? [];
+  const deportesData = deportesNivel.map((d: any) => ({
+    name: d.deporte,
+    value: d.nivel * 20,
+  }));
 
   const activityData = [
     { dia: "Lun", actividades: 3 },
@@ -37,11 +81,6 @@ export default function Page() {
     { dia: "Dom", actividades: 2 },
   ];
 
-  const deportesData = user.deportes.map((deporte: string, index: number) => ({
-    name: deporte,
-    value: 10 + (index * 5),
-  }));
-
   const COLORS = ["#13ec80", "#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981"];
 
   return (
@@ -50,7 +89,7 @@ export default function Page() {
       <div className="bg-[#1e293b] rounded-xl shadow-sm border border-[rgba(148,163,184,0.2)] p-6 mb-6">
         <div className="flex flex-col md:flex-row items-start md:items-center gap-6">
           <img
-            src={user.avatar || "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=400"}
+            src={user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${user.nombre}`}
             alt={user.nombre}
             className="w-32 h-32 rounded-full object-cover border-4 border-[#13ec80]"
           />
@@ -70,29 +109,33 @@ export default function Page() {
             </div>
 
             <div className="flex items-center gap-4 text-sm text-[#94a3b8] mb-4">
-              <div className="flex items-center gap-1">
-                <MapPin className="w-4 h-4" />
-                <span>{user.zona}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Calendar className="w-4 h-4" />
-                <span>{user.edad} años</span>
-              </div>
+              {user.zona && (
+                <div className="flex items-center gap-1">
+                  <MapPin className="w-4 h-4" />
+                  <span>{user.zona}</span>
+                </div>
+              )}
+              {user.edad && (
+                <div className="flex items-center gap-1">
+                  <Calendar className="w-4 h-4" />
+                  <span>{user.edad} años</span>
+                </div>
+              )}
             </div>
 
-            <p className="text-[#f1f5f9] mb-4">{user.bio}</p>
+            {user.bio && <p className="text-[#f1f5f9] mb-4">{user.bio}</p>}
 
             <div className="flex gap-6">
               <button onClick={() => router.push("/app/followers")} className="text-center hover:underline">
-                <span className="font-bold text-[#f1f5f9]">{user.seguidores}</span>
+                <span className="font-bold text-[#f1f5f9]">{user.numSeguidores ?? 0}</span>
                 <span className="text-[#94a3b8] ml-1">Seguidores</span>
               </button>
               <button onClick={() => router.push("/app/following")} className="text-center hover:underline">
-                <span className="font-bold text-[#f1f5f9]">{user.siguiendo}</span>
+                <span className="font-bold text-[#f1f5f9]">{user.numSiguiendo ?? 0}</span>
                 <span className="text-[#94a3b8] ml-1">Siguiendo</span>
               </button>
               <div className="text-center">
-                <span className="font-bold text-[#f1f5f9]">{user.publicaciones}</span>
+                <span className="font-bold text-[#f1f5f9]">{posts.length}</span>
                 <span className="text-[#94a3b8] ml-1">Publicaciones</span>
               </div>
             </div>
@@ -100,21 +143,19 @@ export default function Page() {
         </div>
 
         {/* Sports Tags */}
-        <div className="flex flex-wrap gap-2 mt-6 pt-6 border-t border-[rgba(148,163,184,0.2)]">
-          {user.deportes.map((deporte: string) => (
-            <span key={deporte} className="px-3 py-1 bg-[#13ec80] text-[#102219] rounded-full text-sm font-medium">
-              {deporte}
-            </span>
-          ))}
-          <span className="px-3 py-1 bg-[#13ec80] text-[#102219] rounded-full text-sm font-medium">
-            Nivel: {user.nivelGeneral}%
-          </span>
-        </div>
+        {deportesNivel.length > 0 && (
+          <div className="flex flex-wrap gap-2 mt-6 pt-6 border-t border-[rgba(148,163,184,0.2)]">
+            {deportesNivel.map((d: any) => (
+              <span key={d.deporte} className="px-3 py-1 bg-[#13ec80] text-[#102219] rounded-full text-sm font-medium">
+                {d.deporte} · Nv.{d.nivel}
+              </span>
+            ))}
+          </div>
+        )}
       </div>
 
       {/* Statistics */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
-        {/* Weekly Activity */}
         <div className="bg-[#1e293b] rounded-xl shadow-sm border border-[rgba(148,163,184,0.2)] p-6">
           <div className="flex items-center gap-2 mb-6">
             <TrendingUp className="w-5 h-5 text-[#13ec80]" />
@@ -126,11 +167,7 @@ export default function Page() {
               <XAxis dataKey="dia" stroke="#94a3b8" />
               <YAxis stroke="#94a3b8" />
               <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1e293b",
-                  border: "1px solid rgba(148,163,184,0.2)",
-                  borderRadius: "8px",
-                }}
+                contentStyle={{ backgroundColor: "#1e293b", border: "1px solid rgba(148,163,184,0.2)", borderRadius: "8px" }}
                 labelStyle={{ color: "#f1f5f9" }}
               />
               <Bar dataKey="actividades" fill="#13ec80" radius={[8, 8, 0, 0]} />
@@ -138,49 +175,56 @@ export default function Page() {
           </ResponsiveContainer>
         </div>
 
-        {/* Sports Distribution */}
         <div className="bg-[#1e293b] rounded-xl shadow-sm border border-[rgba(148,163,184,0.2)] p-6">
           <div className="flex items-center gap-2 mb-6">
             <BarChart3 className="w-5 h-5 text-[#13ec80]" />
             <h2 className="text-xl font-bold text-[#f1f5f9]">Distribución por Deporte</h2>
           </div>
-          <ResponsiveContainer width="100%" height={200}>
-            <PieChart>
-              <Pie
-                data={deportesData}
-                cx="50%"
-                cy="50%"
-                labelLine={false}
-                label={({ name, percent }: { name?: string; percent?: number }) => 
-                  `${name ?? ''} ${((percent ?? 0) * 100).toFixed(0)}%`
-                }
-                outerRadius={80}
-                fill="#8884d8"
-                dataKey="value"
-              >
-                {deportesData.map((_, index: number) => (
-                  <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                ))}
-              </Pie>
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "#1e293b",
-                  border: "1px solid rgba(148,163,184,0.2)",
-                  borderRadius: "8px",
-                }}
-              />
-            </PieChart>
-          </ResponsiveContainer>
+          {deportesData.length > 0 ? (
+            <ResponsiveContainer width="100%" height={200}>
+              <PieChart>
+                <Pie
+                  data={deportesData}
+                  cx="50%" cy="50%"
+                  labelLine={false}
+                  label={({ name, percent }: { name?: string; percent?: number }) =>
+                    `${name ?? ""} ${((percent ?? 0) * 100).toFixed(0)}%`
+                  }
+                  outerRadius={80}
+                  dataKey="value"
+                >
+                  {deportesData.map((_: any, index: number) => (
+                    <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip
+                  contentStyle={{ backgroundColor: "#1e293b", border: "1px solid rgba(148,163,184,0.2)", borderRadius: "8px" }}
+                />
+              </PieChart>
+            </ResponsiveContainer>
+          ) : (
+            <p className="text-[#94a3b8] text-center py-16">Añade deportes a tu perfil</p>
+          )}
         </div>
       </div>
 
       {/* My Publications */}
       <div className="mb-6">
         <h2 className="text-2xl font-bold text-[#f1f5f9] mb-4">Mis Publicaciones</h2>
-        {myPublicaciones.length > 0 ? (
+
+        {loadingPosts ? (
           <div className="space-y-4">
-            {myPublicaciones.map((publicacion) => (
-              <PublicationCard key={publicacion.id} publicacion={publicacion} />
+            {[1, 2, 3].map((i) => (
+              <div
+                key={i}
+                className="bg-[#1e293b] rounded-xl border border-[rgba(148,163,184,0.2)] h-48 animate-pulse"
+              />
+            ))}
+          </div>
+        ) : posts.length > 0 ? (
+          <div className="space-y-4">
+            {posts.map((post) => (
+              <PublicationCard key={post._id?.toString() ?? post.id} publicacion={post} />
             ))}
           </div>
         ) : (

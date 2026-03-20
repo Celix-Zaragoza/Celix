@@ -28,8 +28,21 @@ export default function Page() {
 
     setLoading(true);
     try {
-      const success = await login(email, password);
-      if (success) {
+      const response = await fetch("http://localhost:3001/api/v1/auth/login", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email: email,
+          password: password,
+        }),
+      });
+      const data = await response.json();
+      if (data.ok) {
+        console.log("✅Esto devuelve el login", data);
+        localStorage.setItem("token", data.token);
+        login(data.user); 
         toast.success("¡Bienvenido a CELIX!");
         router.push("/app/feed");
       } else {
