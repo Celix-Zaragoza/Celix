@@ -1,5 +1,4 @@
 import jwt from "jsonwebtoken";
-import crypto from "crypto";
 import { BlacklistedToken, User } from "../models/index.js";
 
 function signToken(userId, rol) {
@@ -90,17 +89,14 @@ export const getAuthMe = (req, res) => {
 
 export const logout = async (req, res, next) => {
   try {
-    const token = req.authToken;
+    const tokenHash = req.authTokenHash;
     const expiresAt = req.authTokenExpiration;
 
     // Validación del token 
-    if (!token) {
+    if (!tokenHash) {
       return res.status(400).json({ ok: false, message: "No se pudo invalidar el token" });
     }
 
-    // Hash del token para evitar leaks
-    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
-    
     // Actualización de la base de datos
     await BlacklistedToken.updateOne(
       { tokenHash },

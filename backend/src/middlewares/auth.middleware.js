@@ -36,7 +36,7 @@ export const requireAuth = async (req, res, next) => {
     
     // Devuelve el objeto del usuario en la petición, así 
     req.user = user;
-    req.authToken = token;
+    req.authTokenHash = tokenHash;
     req.authTokenExpiration = new Date(payload.exp * 1000);
     next();
   } catch (err) {
