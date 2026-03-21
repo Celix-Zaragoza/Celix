@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
-import { User } from "../models/index.js";
+import crypto from "crypto";
+import { BlacklistedToken, User } from "../models/index.js";
 
 function signToken(userId, rol) {
   return jwt.sign({ sub: userId.toString(), rol }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -85,4 +86,30 @@ export const login = async (req, res, next) => {
 
 export const getAuthMe = (req, res) => {
   return res.json({ ok: true, user: userPublic(req.user) });
+};
+
+export const logout = async (req, res, next) => {
+  try {
+    const token = req.authToken;
+    const expiresAt = req.authTokenExpiration;
+
+    // Validación del token 
+    if (!token) {
+      return res.status(400).json({ ok: false, message: "No se pudo invalidar el token" });
+    }
+
+    // Hash del token para evitar leaks
+    const tokenHash = crypto.createHash("sha256").update(token).digest("hex");
+    
+    // Actualización de la base de datos
+    await BlacklistedToken.updateOne(
+      { tokenHash },
+      { $setOnInsert: { tokenHash, expiresAt } },
+      { upsert: true }
+    );
+
+    return res.json({ ok: true, message: "Sesión cerrada correctamente" });
+  } catch (err) {
+    next(err);
+  }
 };

@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { login, register, getAuthMe } from "../../controllers/auth.controller.js";
+import { login, register, getAuthMe, logout } from "../../controllers/auth.controller.js";
 import { requireAuth } from "../../middlewares/auth.middleware.js";
 import { validateBody } from "../../middlewares/validate.middleware.js";
 import { loginSchema, registerSchema } from "../../schemas/auth.schema.js";
@@ -92,5 +92,19 @@ router.post("/login", validateBody(loginSchema), login);
  *         description: No autenticado
  */
 router.get("/me", requireAuth, getAuthMe);
+
+/**
+ * @swagger
+ * /api/v1/auth/logout:
+ *   post:
+ *     summary: Invalida el token JWT actual (blacklist)
+ *     tags: [Auth]
+ *     responses:
+ *       200:
+ *         description: Sesión cerrada correctamente
+ *       401:
+ *         description: No autenticado
+ */
+router.post("/logout", requireAuth, logout);
 
 export default router;
