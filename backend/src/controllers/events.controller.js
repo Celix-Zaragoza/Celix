@@ -12,8 +12,22 @@ function toPositiveInt(value, fallback) {
 	return parsed;
 }
 
+
 // Normalizar el evento recibido de la API para que coincida con el modelo en la base de datos
 function normalizeEvent(event) {
+	const ZARAGOZA_BASE = "https://www.zaragoza.es";
+
+	function normalizeImageUrl(url) {
+		if (!url) return null;
+		// Protocol-relative: //www.zaragoza.es/...
+		if (url.startsWith("//")) return `https:${url}`;
+		// Absoluta
+		if (url.startsWith("http")) return url;
+		// Relativa: /cont/paginas/...
+		if (url.startsWith("/")) return `${ZARAGOZA_BASE}${url}`;
+		return null;
+	}
+
 	// Obtener los valores de los arrays del
 	const firstPrice = Array.isArray(event.price) ? event.price[0] : null;
 	const firstOrganizer = Array.isArray(event.organizer) ? event.organizer[0] : null;
@@ -33,7 +47,7 @@ function normalizeEvent(event) {
 		coordenadas: geometryCoords
 			? { lat: geometryCoords[1] ?? null, lng: geometryCoords[0] ?? null }
 			: { lat: null, lng: null },
-		imagen: event.image || null,
+		imagen: normalizeImageUrl(event.image),
 		registrationUrl: event.registration?.url || null,
 		urlFuente: event.alt || "",
 		organizer: firstOrganizer?.title || "",

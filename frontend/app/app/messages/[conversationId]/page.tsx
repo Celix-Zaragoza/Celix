@@ -316,9 +316,9 @@ export default function Page() {
                 >
                   <div className="relative">
                     <img
-                      src={other.avatar ?? "/default-avatar.png"}
+                      src={other.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${other.nombre}`}
                       alt={other.nombre}
-                      className="w-14 h-14 rounded-full object-cover"
+                      className="w-14 h-14 rounded-full object-cover border-4 border-[#13ec80]/30"
                     />
                     {conv.noLeidos > 0 && (
                       <div className="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
@@ -352,7 +352,7 @@ export default function Page() {
                 return (
                   <>
                     <img
-                      src={other.avatar ?? "/default-avatar.png"}
+                      src={other.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${other.nombre}`}
                       alt={other.nombre}
                       className="w-10 h-10 rounded-full object-cover"
                     />
@@ -452,11 +452,11 @@ export default function Page() {
                   onClick={() => handleStartConversation(u.id)}
                   className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
                 >
-                  <img
-                    src={u.avatar ?? "/default-avatar.png"}
-                    alt={u.nombre}
-                    className="w-10 h-10 rounded-full object-cover"
-                  />
+                <img
+                  src={u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${u.nombre}`}
+                  alt={u.nombre}
+                  className="w-10 h-10 rounded-full object-cover"
+                />
                   <div className="text-left">
                     <p className="font-medium text-gray-900">{u.nombre}</p>
                     <p className="text-sm text-gray-500">@{u.alias}</p>
