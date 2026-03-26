@@ -101,3 +101,33 @@ export const sendConversationMessage = async (req, res, next) => {
     return next(err);
   }
 };
+
+export const createOrGetConversation = async (req, res, next) => {
+  try {
+    const { participanteId } = req.body;
+    const myId = req.user._id;
+
+    if (participanteId === myId.toString()) {
+      return res.status(400).json({ ok: false, message: "No puedes iniciar una conversación contigo mismo" });
+    }
+
+    // Buscar si ya existe
+    const existing = await Conversation.findOne({
+      participantes: { $all: [myId, participanteId], $size: 2 },
+    }).populate("participantes", "nombre alias avatar");
+
+    if (existing) {
+      return res.json({ ok: true, conversation: existing });
+    }
+
+    // Crear nueva
+    const conversation = await Conversation.create({
+      participantes: [myId, participanteId],
+    });
+    const populated = await conversation.populate("participantes", "nombre alias avatar");
+
+    return res.status(201).json({ ok: true, conversation: populated });
+  } catch (err) {
+    return next(err);
+  }
+};
