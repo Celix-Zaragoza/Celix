@@ -1,5 +1,5 @@
 import jwt from "jsonwebtoken";
-import { User } from "../models/index.js";
+import { BlacklistedToken, User } from "../models/index.js";
 
 function signToken(userId, rol) {
   return jwt.sign({ sub: userId.toString(), rol }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -85,4 +85,27 @@ export const login = async (req, res, next) => {
 
 export const getAuthMe = (req, res) => {
   return res.json({ ok: true, user: userPublic(req.user) });
+};
+
+export const logout = async (req, res, next) => {
+  try {
+    const tokenHash = req.authTokenHash;
+    const expiresAt = req.authTokenExpiration;
+
+    // Validación del token 
+    if (!tokenHash) {
+      return res.status(400).json({ ok: false, message: "No se pudo invalidar el token" });
+    }
+
+    // Actualización de la base de datos
+    await BlacklistedToken.updateOne(
+      { tokenHash },
+      { $setOnInsert: { tokenHash, expiresAt } },
+      { upsert: true }
+    );
+
+    return res.json({ ok: true, message: "Sesión cerrada correctamente" });
+  } catch (err) {
+    next(err);
+  }
 };

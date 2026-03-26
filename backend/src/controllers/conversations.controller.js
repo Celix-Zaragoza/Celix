@@ -32,17 +32,16 @@ export const listConversations = async (req, res, next) => {
 export const listConversationMessages = async (req, res, next) => {
   
   const { conversationId } = req.params; 
-
-  const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
-  const limit = Math.min(50, Math.max(1, Number.parseInt(req.query.limit, 10) || 20));
-  const skip = (page - 1) * limit;
+  const limit = Math.min(100, Math.max(1, Number.parseInt(req.query.limit, 10) || 50));
+  
+  const existing = await Conversation.findOne()
+  if (!existing) return res.status(400).json({ ok: false, message:`No se ha encontrado una conversación con el id: ${conversationId}`})
 
   try {
     const filter = { conversacion: conversationId };
     const [messages, total] = await Promise.all([
       Message.find(filter)
         .sort({ createdAt: -1 })
-        .skip(skip)
         .limit(limit)
         .populate("remitente", "nombre alias avatar"),
       Message.countDocuments(filter),
@@ -51,7 +50,7 @@ export const listConversationMessages = async (req, res, next) => {
     return res.json({
       ok: true,
       messages,
-      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      pagination: { limit, total, pages: Math.ceil(total / limit) },
     });
   } catch (err) {
     return next(err);
