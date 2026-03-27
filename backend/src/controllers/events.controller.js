@@ -1,3 +1,6 @@
+import { Event } from "../models/Event.js";
+import { syncEvents } from "../services/events.sync.js";
+
 const ZARAGOZA_EVENTS_URL = "https://www.zaragoza.es/sede/servicio/actividades/evento";
 
 const DEFAULT_SORT = "daysLeft asc";
@@ -140,44 +143,49 @@ async function fetchAllZaragozaEvents({ start, rows, sort, theme, query, signal 
 	};
 }
 
-// GET /api/v1/events
+// GET /api/v1/events — lee de MongoDB
 export const getSportsEvents = async (req, res, next) => {
-	try {
-		const start = toPositiveInt(req.query.start, 0);
-		const rows = Math.min(MAX_PAGE_SIZE, toPositiveInt(req.query.rows, DEFAULT_PAGE_SIZE));
-		const sort = req.query.sort || DEFAULT_SORT;
-		const query = req.query.query?.trim();
-		const theme = req.query.theme?.trim() || "Deporte";
+  try {
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit) || 12);
+    const skip = (page - 1) * limit;
 
-		// Timeout global: si Zaragoza tarda demasiado, aborta todas las peticiones en curso.
-		const controller = new AbortController();
-		const timeout = setTimeout(() => controller.abort(), 10_000);
+    const filter = { oculto: false };
+    if (req.query.query) filter.title = { $regex: req.query.query, $options: "i" };
+    if (req.query.tipo && req.query.tipo !== "all") filter.tipo = req.query.tipo;
 
-		try {
-			const allPages = await fetchAllZaragozaEvents({
-				start,
-				rows,
-				sort,
-				theme,
-				query,
-				signal: controller.signal,
-			});
+    // Filtro de fecha
+    const hoy = new Date();
+    hoy.setHours(0, 0, 0, 0);
+    if (req.query.fecha === "proximos") filter.startDate = { $gte: hoy };
+    else if (req.query.fecha === "pasados") filter.startDate = { $lt: hoy };
+    else if (req.query.fecha === "hoy") {
+      const manana = new Date(hoy);
+      manana.setDate(manana.getDate() + 1);
+      filter.startDate = { $gte: hoy, $lt: manana };
+    }
 
-			return res.json({
-				ok: true,
-				filters: { theme, query: query || null, sort },
-				pagination: {
-					start,
-					rows,
-					totalCount: allPages.totalCount,
-					fetched: allPages.events.length,
-				},
-				events: allPages.events.map(normalizeEvent),
-			});
-		} finally {
-			clearTimeout(timeout);
-		}
-	} catch (err) {
-		return next(err);
-	}
+    const [events, total] = await Promise.all([
+      Event.find(filter).sort({ startDate: 1 }).skip(skip).limit(limit),
+      Event.countDocuments(filter),
+    ]);
+
+    return res.json({
+      ok: true,
+      pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      events,
+    });
+  } catch (err) {
+    return next(err);
+  }
+};
+
+// POST /api/v1/admin/events/sync — sync manual (lo registraremos en admin.routes.js)
+export const triggerSync = async (req, res, next) => {
+  try {
+    const result = await syncEvents();
+    return res.json(result);
+  } catch (err) {
+    return next(err);
+  }
 };

@@ -42,7 +42,7 @@ export default function Page() {
       if (data.ok) {
         console.log("✅Esto devuelve el login", data);
         localStorage.setItem("token", data.token);
-        login(data.user); 
+        login({ ...data.user, isAdmin: data.user.rol === "ADMIN" });
         toast.success("¡Bienvenido a CELIX!");
         router.push("/app/feed");
       } else {

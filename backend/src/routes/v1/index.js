@@ -5,6 +5,7 @@ import postsRouter from "./posts.routes.js";
 import conversationsRouter from "./conversations.routes.js";
 import eventsRouter from "./events.routes.js";
 import instalacionesRouter from "./instalaciones.routes.js";
+import adminRouter from "./admin.routes.js";
 
 const router = Router();
 
@@ -14,5 +15,6 @@ router.use("/posts", postsRouter);
 router.use("/conversations", conversationsRouter);
 router.use("/events", eventsRouter);
 router.use("/instalaciones", instalacionesRouter);
+router.use("/admin", adminRouter);
 
 export default router;

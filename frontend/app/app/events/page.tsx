@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { Button } from "../../components/ui/button";
 import { Input } from "../../components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
@@ -9,15 +9,15 @@ import {
   Calendar, MapPin, Search, ExternalLink, Loader2,
   AlertCircle, User, List, Map as MapIcon, Phone, Clock,
 } from "lucide-react";
-import { format, isAfter, isBefore, startOfDay } from "date-fns";
+import { format } from "date-fns";
 import { es } from "date-fns/locale";
 import { MapComponent } from "../../components/MapComponent";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
-const EVENTOS_POR_PAGINA = 12;
 const INSTALACIONES_POR_PAGINA = 12;
 
 interface Evento {
+  id: string;
   externalId: number;
   title: string;
   description: string;
@@ -43,6 +43,12 @@ interface InstalacionReal {
   coordenadas: { lat: number; lng: number };
 }
 
+interface Pagination {
+  page: number;
+  pages: number;
+  total: number;
+}
+
 function formatFecha(dateStr: string | null): string {
   if (!dateStr) return "Fecha no disponible";
   try {
@@ -52,51 +58,66 @@ function formatFecha(dateStr: string | null): string {
   }
 }
 
-function getTiposUnicos(eventos: Evento[]): string[] {
-  const tipos = new Set(eventos.map((e) => e.tipo).filter(Boolean));
-  return Array.from(tipos).sort();
-}
-
 export default function Page() {
+  // ── Eventos ───────────────────────────────────────────────────────────────
   const [eventos, setEventos] = useState<Evento[]>([]);
+  const [pagination, setPagination] = useState<Pagination>({ page: 1, pages: 1, total: 0 });
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [currentPage, setCurrentPage] = useState(1);
+
+  // ── Filtros ───────────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTipo, setSelectedTipo] = useState<string>("all");
   const [selectedFecha, setSelectedFecha] = useState<string>("all");
+
+  // ── Instalaciones ─────────────────────────────────────────────────────────
   const [activeTab, setActiveTab] = useState("eventos");
   const [viewMode, setViewMode] = useState<"list" | "map">("list");
-  const [currentPage, setCurrentPage] = useState(1);
   const [instalaciones, setInstalaciones] = useState<InstalacionReal[]>([]);
   const [loadingInstalaciones, setLoadingInstalaciones] = useState(false);
   const [currentPageInstalaciones, setCurrentPageInstalaciones] = useState(1);
 
-  useEffect(() => {
-    const fetchEventos = async () => {
-      setLoading(true);
-      setError(null);
-      try {
-        const res = await fetch(`${API}/api/v1/events`, {
-          headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
-        });
-        if (!res.ok) throw new Error(`Error ${res.status}`);
-        const data = await res.json();
-        if (data.ok) setEventos(data.events ?? []);
-        else throw new Error("Respuesta inesperada del servidor");
-      } catch (err: any) {
-        setError("No se pudieron cargar los eventos. Inténtalo de nuevo.");
-        console.error(err);
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchEventos();
-  }, []);
+  // ── Fetch eventos (server-side) ───────────────────────────────────────────
+  const fetchEventos = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const params = new URLSearchParams({
+        page: String(currentPage),
+        limit: "12",
+      });
+      if (searchQuery) params.set("query", searchQuery);
+      if (selectedTipo !== "all") params.set("tipo", selectedTipo);
+      if (selectedFecha !== "all") params.set("fecha", selectedFecha);
 
+      const res = await fetch(`${API}/api/v1/events?${params}`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      if (!res.ok) throw new Error(`Error ${res.status}`);
+      const data = await res.json();
+      if (data.ok) {
+        setEventos(data.events ?? []);
+        setPagination(data.pagination);
+      } else {
+        throw new Error("Respuesta inesperada del servidor");
+      }
+    } catch (err: any) {
+      setError("No se pudieron cargar los eventos. Inténtalo de nuevo.");
+      console.error(err);
+    } finally {
+      setLoading(false);
+    }
+  }, [currentPage, searchQuery, selectedTipo, selectedFecha]);
+
+  useEffect(() => { fetchEventos(); }, [fetchEventos]);
+
+  // Resetear página al cambiar filtros
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedTipo, selectedFecha]);
 
+  // ── Fetch instalaciones (lazy) ────────────────────────────────────────────
   useEffect(() => {
     setCurrentPageInstalaciones(1);
   }, [searchQuery]);
@@ -124,36 +145,7 @@ export default function Page() {
     fetchInstalaciones();
   }, [activeTab]);
 
-  const tiposUnicos = useMemo(() => getTiposUnicos(eventos), [eventos]);
-
-  const filteredEventos = useMemo(() => {
-    const hoy = startOfDay(new Date());
-    return eventos.filter((evento) => {
-      const matchesSearch =
-        !searchQuery ||
-        evento.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        evento.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        evento.ubicacion?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesTipo = selectedTipo === "all" || evento.tipo === selectedTipo;
-      let matchesFecha = true;
-      if (selectedFecha === "proximos" && evento.startDate) {
-        matchesFecha = isAfter(new Date(evento.startDate), hoy);
-      } else if (selectedFecha === "pasados" && evento.startDate) {
-        matchesFecha = isBefore(new Date(evento.startDate), hoy);
-      } else if (selectedFecha === "hoy" && evento.startDate) {
-        const eventoDay = startOfDay(new Date(evento.startDate));
-        matchesFecha = eventoDay.getTime() === hoy.getTime();
-      }
-      return matchesSearch && matchesTipo && matchesFecha;
-    });
-  }, [eventos, searchQuery, selectedTipo, selectedFecha]);
-
-  const totalPages = Math.ceil(filteredEventos.length / EVENTOS_POR_PAGINA);
-  const eventosPaginados = filteredEventos.slice(
-    (currentPage - 1) * EVENTOS_POR_PAGINA,
-    currentPage * EVENTOS_POR_PAGINA
-  );
-
+  // ── Instalaciones en cliente ──────────────────────────────────────────────
   const filteredInstalaciones = instalaciones.filter((i) =>
     i.nombre.toLowerCase().includes(searchQuery.toLowerCase())
   );
@@ -163,18 +155,19 @@ export default function Page() {
     currentPageInstalaciones * INSTALACIONES_POR_PAGINA
   );
 
+  // ── Componentes de paginación ─────────────────────────────────────────────
   const PaginacionEventos = () => (
     <div className="mt-8">
       <div className="flex items-center justify-between gap-2 md:hidden">
         <Button variant="outline" size="sm" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1} className="border-[rgba(148,163,184,0.2)] text-[#94a3b8] hover:text-[#f1f5f9] disabled:opacity-40">← Anterior</Button>
-        <span className="text-sm text-[#94a3b8]"><span className="text-[#13ec80] font-bold">{currentPage}</span> / {totalPages}</span>
-        <Button variant="outline" size="sm" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="border-[rgba(148,163,184,0.2)] text-[#94a3b8] hover:text-[#f1f5f9] disabled:opacity-40">Siguiente →</Button>
+        <span className="text-sm text-[#94a3b8]"><span className="text-[#13ec80] font-bold">{currentPage}</span> / {pagination.pages}</span>
+        <Button variant="outline" size="sm" onClick={() => setCurrentPage((p) => Math.min(pagination.pages, p + 1))} disabled={currentPage === pagination.pages} className="border-[rgba(148,163,184,0.2)] text-[#94a3b8] hover:text-[#f1f5f9] disabled:opacity-40">Siguiente →</Button>
       </div>
       <div className="hidden md:flex items-center justify-center gap-2">
         <Button variant="outline" size="sm" onClick={() => setCurrentPage((p) => Math.max(1, p - 1))} disabled={currentPage === 1} className="border-[rgba(148,163,184,0.2)] text-[#94a3b8] hover:text-[#f1f5f9] disabled:opacity-40">← Anterior</Button>
         <div className="flex items-center gap-1">
-          {Array.from({ length: totalPages }, (_, i) => i + 1)
-            .filter((p) => p === 1 || p === totalPages || Math.abs(p - currentPage) <= 1)
+          {Array.from({ length: pagination.pages }, (_, i) => i + 1)
+            .filter((p) => p === 1 || p === pagination.pages || Math.abs(p - currentPage) <= 1)
             .reduce<(number | "...")[]>((acc, p, idx, arr) => {
               if (idx > 0 && p - (arr[idx - 1] as number) > 1) acc.push("...");
               acc.push(p);
@@ -188,7 +181,7 @@ export default function Page() {
               )
             )}
         </div>
-        <Button variant="outline" size="sm" onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))} disabled={currentPage === totalPages} className="border-[rgba(148,163,184,0.2)] text-[#94a3b8] hover:text-[#f1f5f9] disabled:opacity-40">Siguiente →</Button>
+        <Button variant="outline" size="sm" onClick={() => setCurrentPage((p) => Math.min(pagination.pages, p + 1))} disabled={currentPage === pagination.pages} className="border-[rgba(148,163,184,0.2)] text-[#94a3b8] hover:text-[#f1f5f9] disabled:opacity-40">Siguiente →</Button>
       </div>
     </div>
   );
@@ -223,6 +216,7 @@ export default function Page() {
     </div>
   );
 
+  // ── Render ────────────────────────────────────────────────────────────────
   return (
     <div className="max-w-7xl mx-auto">
       <div className="mb-6">
@@ -249,7 +243,8 @@ export default function Page() {
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">Todos los tipos</SelectItem>
-              {tiposUnicos.map((tipo) => (
+              {/* Tipos estáticos más comunes de Zaragoza */}
+              {["Deporte", "Atletismo", "Fútbol", "Baloncesto", "Natación", "Tenis", "Pádel", "Ciclismo", "Running", "Yoga"].map((tipo) => (
                 <SelectItem key={tipo} value={tipo}>{tipo}</SelectItem>
               ))}
             </SelectContent>
@@ -270,8 +265,12 @@ export default function Page() {
 
       <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="w-full grid grid-cols-2 h-12 mb-6">
-          <TabsTrigger value="eventos">Eventos {!loading && `(${filteredEventos.length})`}</TabsTrigger>
-          <TabsTrigger value="instalaciones">Instalaciones ({filteredInstalaciones.length})</TabsTrigger>
+          <TabsTrigger value="eventos">
+            Eventos {!loading && `(${pagination.total})`}
+          </TabsTrigger>
+          <TabsTrigger value="instalaciones">
+            Instalaciones ({filteredInstalaciones.length})
+          </TabsTrigger>
         </TabsList>
 
         {/* ── Tab Eventos ── */}
@@ -289,23 +288,22 @@ export default function Page() {
               <p className="text-[#94a3b8] text-sm">Comprueba tu conexión o inténtalo más tarde</p>
             </div>
           )}
-          {!loading && !error && filteredEventos.length === 0 && (
+          {!loading && !error && eventos.length === 0 && (
             <div className="bg-[#1e293b] rounded-xl border border-[rgba(148,163,184,0.2)] p-12 text-center">
               <Calendar className="w-16 h-16 text-[#94a3b8] mx-auto mb-4" />
               <p className="text-[#f1f5f9] font-medium mb-1">No se encontraron eventos</p>
               <p className="text-[#94a3b8] text-sm">Prueba a cambiar los filtros de búsqueda</p>
             </div>
           )}
-          {!loading && !error && filteredEventos.length > 0 && (
+          {!loading && !error && eventos.length > 0 && (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                {eventosPaginados.map((evento) => (
+                {eventos.map((evento) => (
                   <div
-                    key={evento.externalId}
+                    key={evento.id ?? evento.externalId}
                     className="bg-[#1e293b] rounded-xl border border-[rgba(148,163,184,0.2)] overflow-hidden hover:border-[rgba(19,236,128,0.3)] transition-colors"
                   >
                     {evento.imagen ? (
-                      console.log("Mostrando imagen para evento:", evento.title, "URL:", evento.imagen),
                       <div className="w-full h-44 bg-[#0f172a]">
                         <img
                           src={evento.imagen}
@@ -376,7 +374,7 @@ export default function Page() {
                   </div>
                 ))}
               </div>
-              {totalPages > 1 && <PaginacionEventos />}
+              {pagination.pages > 1 && <PaginacionEventos />}
             </>
           )}
         </TabsContent>
