@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Heart, MessageCircle, MapPin, MoreVertical } from "lucide-react";
 import { Button } from "./ui/button";
@@ -33,8 +34,16 @@ export const PublicationCard = ({ publicacion }: PublicationCardProps) => {
 
   const [liked, setLiked] = useState<boolean>(initialHasLiked);
   const [likes, setLikes] = useState<number>(initialLikes);
-
+  const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const router = useRouter();
+
+  useEffect(() => {
+    if (selectedImage) {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "auto";
+    }
+  }, [selectedImage]);
 
   const handleLike = async () => {
     if (!postId) return;
@@ -130,7 +139,8 @@ export const PublicationCard = ({ publicacion }: PublicationCardProps) => {
           <img
             src={publicacion.imagen}
             alt="Publicación"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover cursor-pointer"
+            onClick={() => setSelectedImage(publicacion.imagen)}
           />
         </div>
       )}
@@ -149,15 +159,28 @@ export const PublicationCard = ({ publicacion }: PublicationCardProps) => {
             <Heart className={`w-6 h-6 ${liked ? "fill-current" : ""}`} />
             <span className="font-medium">{likes}</span>
           </button>
-
-          <button className="flex items-center gap-2 text-[#94a3b8] hover:text-[#13ec80] transition-colors">
-            <MessageCircle className="w-6 h-6" />
-            <span className="font-medium">
-              {publicacion.comentarios ?? publicacion.numComentarios ?? 0}
-            </span>
-          </button>
         </div>
       </div>
+      {selectedImage && (
+      <div
+        className="fixed inset-0 bg-black/80 flex items-center justify-center z-50"
+        onClick={() => setSelectedImage(null)}
+      >
+        <button
+          onClick={() => setSelectedImage(null)}
+          className="absolute top-4 right-4 text-white text-3xl font-bold"
+        >
+          ✕
+        </button>
+
+        <img
+          src={selectedImage}
+          className="max-h-[90vh] max-w-[90vw] object-contain rounded-lg"
+          onClick={(e) => e.stopPropagation()}
+        />
+      </div>
+    )}
     </div>
+    
   );
 };

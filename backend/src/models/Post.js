@@ -11,6 +11,13 @@ const postSchema = new mongoose.Schema(
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     oculto: { type: Boolean, default: false },
     eliminado: { type: Boolean, default: false },
+    // Campo para el Motor de Recomendación (IA)
+    ia_tags: {
+      deporte_principal: { type: String, default: null},
+      nivel_recomendado: { type: Number, min: 1, max: 5, default: null},
+      keyword: [{ type: String}],
+      analizado: { type: Boolean, default: false}
+    }
   },
   {
     timestamps: true,
@@ -27,5 +34,7 @@ postSchema.virtual("numLikes").get(function () { return this.likes?.length ?? 0;
 postSchema.index({ autor: 1, createdAt: -1 });
 postSchema.index({ deporte: 1, createdAt: -1 });
 postSchema.index({ oculto: 1, eliminado: 1, createdAt: -1 });
+// Indice para optimizar el feed "Para ti"
+postSchema.index({"ia_tags.analizado": 1, "ia_tags.nivel_recomendado": 1});
 
 export const Post = mongoose.model("Post", postSchema);

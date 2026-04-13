@@ -1,4 +1,5 @@
 import { Post, User } from "../models/index.js";
+import { analizarPostConIA} from "../services/geminiService.js";
 
 /** Añade al post si el usuario autenticado ya dio like */
 function postPublic(post, userId) {
@@ -80,7 +81,7 @@ export const getFollowingFeed = async (req, res, next) => {
 export const createPost = async (req, res, next) => {
   try {
     const { contenido, deporte, ubicacion, tipo, imagen } = req.body;
-
+    
     const post = await Post.create({
       autor: req.user._id,
       contenido,
@@ -90,13 +91,42 @@ export const createPost = async (req, res, next) => {
       imagen: imagen || null,
     });
 
+    const infoDeporte = req.user.deportesNivel?.find(d => 
+      d.deporte.toLowerCase() === deporte.toLowerCase()
+    );
+    const nivelActual = infoDeporte ? infoDeporte.nivel : 3; // 3 por defecto si no lo tiene en su perfil
+    
     await post.populate("autor", "alias nombre avatar zona");
 
-    return res.status(201).json({ ok: true, post: postPublic(post, req.user._id) });
+    res.status(201).json({ ok: true, post: postPublic(post, req.user._id) });
+
+    procesarPostEnSegundoPlano(post._id, contenido, deporte, nivelActual).catch(err =>
+      console.error("Error silencioso en background:", err)
+    );
   } catch (err) {
     next(err);
   }
 };
+
+// Función helper para ejecutar la IA de fondo
+async function procesarPostEnSegundoPlano(postId, contenido, deporte, nivelUsuario) {
+  console.log('[IA] Iniciando análisis para post: ${postId}');
+  const etiquetas = await analizarPostConIA(contenido, deporte, nivelUsuario);
+  
+  if (etiquetas) {
+    await Post.findByIdAndUpdate(postId, {
+      ia_tags: {
+        deporte_principal: etiquetas.deporte_principal,
+        nivel_recomendado: etiquetas.nivel_recomendado,
+        keywords: etiquetas.keywords,
+        analizado: true
+      }
+    });
+    console.log(`[IA] Post ${postId} analizado correctamente.`);
+  } else {
+    console.log(`[IA] Fallo en el análisis para el post ${postId}`);
+  }
+}
 
 // ── DELETE /posts/:id ─────────────────────────────────────────────────────────
 

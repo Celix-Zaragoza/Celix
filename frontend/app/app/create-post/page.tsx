@@ -43,12 +43,13 @@ export default function Page() {
   const uploadImage = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", "tu_preset");
+    formData.append("upload_preset", "celix_posts");
 
-    const res = await fetch("https://api.cloudinary.com/v1_1/TU_CLOUD/image/upload", {
+    const res = await fetch("https://api.cloudinary.com/v1_1/du36wk1j8/image/upload", {
       method: "POST",
       body: formData,
     });
+    if (!res.ok) throw new Error("Error subiendo imagen");
 
     const data = await res.json();
     return data.secure_url;
@@ -65,11 +66,12 @@ export default function Page() {
     setLoading(true);
 
     try {
-      let imageUrl = "";
+      let imageUrl: string | null = null;
 
       // 👇 SUBES LA IMAGEN SOLO SI EXISTE
       if (file) {
         imageUrl = await uploadImage(file);
+        console.log("IMAGE URL:", imageUrl);
       }
 
       const res = await fetch("http://localhost:3001/api/v1/posts", {
@@ -83,7 +85,7 @@ export default function Page() {
           deporte: formData.deporte,
           ubicacion: formData.ubicacion,
           tipo: "entrenamiento",
-          imagen: imageUrl, // 👈 AQUÍ VA LA URL, NO base64
+          imagen: imageUrl, 
         }),
       });
 
@@ -199,7 +201,7 @@ export default function Page() {
                 />
                 <button
                   type="button"
-                  onClick={() => setImagePreview(null)}
+                  onClick={() =>{ setImagePreview(null); setFile(null);}}
                   className="absolute top-2 right-2 bg-[#0f172a]/80 rounded-full p-2 hover:bg-[#0f172a] transition-colors"
                 >
                   <X className="w-4 h-4 text-[#f1f5f9]" />
