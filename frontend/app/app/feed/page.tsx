@@ -3,11 +3,9 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
 import { PublicationCard } from "../../components/PublicationCard";
-import { deportesDisponibles } from "../../data/mockData";
 import { Button } from "../../components/ui/button";
-import { Sparkles, TrendingUp, Loader2 } from "lucide-react";
+import { Loader2, PlusCircle } from "lucide-react";
 
 const API = "http://localhost:3001/api/v1";
 
@@ -22,7 +20,6 @@ export default function Page() {
   const router = useRouter();
   const { user } = useAuth();
   const [activeTab, setActiveTab] = useState("para-ti");
-  const [selectedDeporte, setSelectedDeporte] = useState<string | null>(null);
 
   const [posts, setPosts] = useState<any[]>([]);
   const [followingPosts, setFollowingPosts] = useState<any[]>([]);
@@ -34,10 +31,7 @@ export default function Page() {
     const fetchPosts = async () => {
       setLoadingPosts(true);
       try {
-        const params = new URLSearchParams({ limit: "10" });
-        if (selectedDeporte) params.set("deporte", selectedDeporte);
-
-        const res = await fetch(`${API}/posts?${params}`, { headers: authHeaders() });
+        const res = await fetch(`${API}/posts?limit=10`, { headers: authHeaders() });
         if (res.ok) {
           const data = await res.json();
           setPosts(data.posts ?? []);
@@ -49,7 +43,7 @@ export default function Page() {
       }
     };
     fetchPosts();
-  }, [selectedDeporte]);
+  }, []);
 
   // Cargar feed de siguiendo al cambiar al tab
   useEffect(() => {
@@ -71,118 +65,86 @@ export default function Page() {
     fetchFollowing();
   }, [activeTab]);
 
-  const filteredPosts = selectedDeporte
-    ? posts.filter((p) => p.deporte === selectedDeporte)
-    : posts;
+  const activePosts = activeTab === "siguiendo" ? followingPosts : posts;
+  const isLoading = activeTab === "siguiendo" ? loadingFollowing : loadingPosts;
 
   return (
-    <div className="max-w-4xl mx-auto">
-      {/* Header */}
-      <div className="mb-6">
-        <h1 className="text-3xl font-bold text-[#f1f5f9] mb-2">Feed de actividades</h1>
-        <p className="text-[#94a3b8]">
-          Descubre lo que está pasando en la comunidad deportiva de Zaragoza
-        </p>
+    <div className="max-w-2xl mx-auto">
+
+      {/* Tabs estilo Figma — línea inferior, sin card */}
+      <div className="flex items-center border-b mb-4" style={{ borderColor: "rgba(148,163,184,0.15)" }}>
+        {["siguiendo", "para-ti"].map((tab) => (
+          <button
+            key={tab}
+            onClick={() => setActiveTab(tab)}
+            className="flex-1 py-3 text-sm font-semibold transition-colors relative"
+            style={{ color: activeTab === tab ? "#f1f5f9" : "#94a3b8" }}
+          >
+            {tab === "siguiendo" ? "Siguiendo" : "Para ti"}
+            {activeTab === tab && (
+              <span
+                className="absolute bottom-0 left-1/2 -translate-x-1/2 h-0.5 rounded-full"
+                style={{ width: "40%", backgroundColor: "#13ec80" }}
+              />
+            )}
+          </button>
+        ))}
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="mb-6">
-        <TabsList className="w-full grid grid-cols-2 h-12">
-          <TabsTrigger value="para-ti" className="flex items-center gap-2">
-            <Sparkles className="w-4 h-4" />
-            Para ti
-          </TabsTrigger>
-          <TabsTrigger value="siguiendo" className="flex items-center gap-2">
-            <TrendingUp className="w-4 h-4" />
-            Siguiendo
-          </TabsTrigger>
-        </TabsList>
+      {/* Botón subir post */}
+      <div className="flex justify-center mb-6">
+        <button
+          onClick={() => router.push("/app/create-post")}
+          className="flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all"
+          style={{
+            backgroundColor: "rgba(19,236,128,0.12)",
+            color: "#13ec80",
+            border: "1px solid rgba(19,236,128,0.25)",
+          }}
+        >
+          <PlusCircle className="w-4 h-4" />
+          Subir nuevo post
+        </button>
+      </div>
 
-        {/* Tab: Para ti */}
-        <TabsContent value="para-ti" className="space-y-4 mt-6">
-          {loadingPosts ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-[#13ec80]" />
-            </div>
-          ) : filteredPosts.length > 0 ? (
-            filteredPosts.map((post) => (
-              <PublicationCard key={post._id ?? post.id} publicacion={post} />
-            ))
-          ) : (
-            <div className="bg-[#1e293b] rounded-xl border border-[rgba(148,163,184,0.2)] p-12 text-center">
-              <p className="text-[#94a3b8]">
-                {selectedDeporte
-                  ? `No hay publicaciones de ${selectedDeporte} todavía`
-                  : "No hay publicaciones todavía"}
-              </p>
-              <Button
-                onClick={() => router.push("/app/create-post")}
-                className="mt-4 bg-[#13ec80] text-[#102219] hover:bg-[#10d671]"
-              >
-                Crear la primera
-              </Button>
-            </div>
-          )}
-        </TabsContent>
-
-        {/* Tab: Siguiendo */}
-        <TabsContent value="siguiendo" className="space-y-4 mt-6">
-          {loadingFollowing ? (
-            <div className="flex justify-center py-12">
-              <Loader2 className="w-8 h-8 animate-spin text-[#13ec80]" />
-            </div>
-          ) : followingPosts.length > 0 ? (
-            followingPosts.map((post) => (
-              <PublicationCard key={post._id ?? post.id} publicacion={post} />
-            ))
-          ) : (
-            <div className="bg-[#1e293b] rounded-xl border border-[rgba(148,163,184,0.2)] p-12 text-center">
-              <p className="text-[#94a3b8] mb-4">
-                Aún no sigues a nadie o los usuarios que sigues no han publicado
-              </p>
-              <Button
-                onClick={() => router.push("/app/search")}
-                className="bg-[#13ec80] text-[#102219] hover:bg-[#10d671]"
-              >
-                Buscar usuarios
-              </Button>
-            </div>
-          )}
-        </TabsContent>
-      </Tabs>
-
-      {/* Recomendaciones — personalizadas con deportes del usuario */}
-      {activeTab === "para-ti" && (
-        <div className="bg-[#1e293b] rounded-xl p-6 border border-[rgba(148,163,184,0.2)]">
-          <div className="flex items-start gap-4">
-            <div className="bg-[#13ec80] rounded-full p-3">
-              <Sparkles className="w-6 h-6 text-[#102219]" />
-            </div>
-            <div>
-              <h3 className="font-bold text-[#f1f5f9] mb-2">
-                Recomendaciones personalizadas
-              </h3>
-              <p className="text-[#94a3b8] text-sm mb-3">
-                Basadas en tus deportes y tu zona
-              </p>
-              <div className="flex flex-wrap gap-2">
-                {user?.zona && (
-                  <span className="px-3 py-1 bg-[#334155] rounded-full text-sm font-medium text-[#f1f5f9]">
-                    📍 {user.zona}
-                  </span>
-                )}
-                {(user?.deportesNivel ?? []).slice(0, 3).map((d: any) => (
-                  <span
-                    key={d.deporte}
-                    className="px-3 py-1 bg-[#334155] rounded-full text-sm font-medium text-[#f1f5f9]"
-                  >
-                    {d.deporte}
-                  </span>
-                ))}
-              </div>
-            </div>
+      {/* Contenido */}
+      <div className="space-y-4">
+        {isLoading ? (
+          <div className="flex justify-center py-12">
+            <Loader2 className="w-8 h-8 animate-spin" style={{ color: "#13ec80" }} />
           </div>
-        </div>
-      )}
+        ) : activePosts.length > 0 ? (
+          activePosts.map((post) => (
+            <PublicationCard key={post._id ?? post.id} publicacion={post} />
+          ))
+        ) : (
+          <div
+            className="rounded-xl p-12 text-center"
+            style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(148,163,184,0.1)" }}
+          >
+            <p className="mb-4" style={{ color: "#94a3b8" }}>
+              {activeTab === "siguiendo"
+                ? "Aún no sigues a nadie o los usuarios que sigues no han publicado"
+                : "No hay publicaciones todavía"}
+            </p>
+            <Button
+              onClick={() => router.push(activeTab === "siguiendo" ? "/app/search" : "/app/create-post")}
+              className="bg-[#13ec80] text-[#102219] hover:bg-[#10d671]"
+            >
+              {activeTab === "siguiendo" ? "Buscar usuarios" : "Crear la primera"}
+            </Button>
+          </div>
+        )}
+
+        {/* Spinner de carga al final */}
+        {!isLoading && activePosts.length > 0 && (
+          <div className="flex justify-center py-6">
+            <p className="text-xs" style={{ color: "rgba(148,163,184,0.4)" }}>
+              Buscando más publicaciones para ti...
+            </p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }

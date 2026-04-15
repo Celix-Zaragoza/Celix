@@ -1,6 +1,12 @@
 // backend/src/controllers/admin.controller.js
 import { Post, User } from "../models/index.js";
 import { Event } from "../models/Event.js";
+import {
+  sendPostHiddenEmail,
+  sendPostRestoredEmail,
+  sendUserBlockedEmail,
+  sendUserUnblockedEmail,
+} from "../services/email.service.js";
 
 // ── PUBLICACIONES ─────────────────────────────────────────────────────────────
 
@@ -42,6 +48,14 @@ export const hidePost = async (req, res, next) => {
 
     if (!post) return res.status(404).json({ ok: false, message: "Post no encontrado" });
 
+    if (post.autor?.email) {
+      sendPostHiddenEmail({
+        to: post.autor.email,
+        nombre: post.autor.nombre,
+        contenido: post.contenido,
+      }).catch(console.error);
+    }
+    
     return res.json({ ok: true, post });
   } catch (err) { next(err); }
 };
@@ -55,6 +69,14 @@ export const restorePost = async (req, res, next) => {
     ).populate("autor", "alias nombre email");
 
     if (!post) return res.status(404).json({ ok: false, message: "Post no encontrado" });
+
+    if (post.autor?.email) {
+      sendPostRestoredEmail({
+        to: post.autor.email,
+        nombre: post.autor.nombre,
+        contenido: post.contenido,
+      }).catch(console.error);
+    }
 
     return res.json({ ok: true, post });
   } catch (err) { next(err); }
@@ -123,6 +145,14 @@ export const blockUser = async (req, res, next) => {
       return res.status(400).json({ ok: false, message: "No puedes bloquearte a ti mismo" });
     }
 
+    if (user.email) {
+      sendUserBlockedEmail({
+        to: user.email,
+        nombre: user.nombre,
+        motivo: req.body.motivo ?? null,
+      }).catch(console.error);
+    }
+
     return res.json({ ok: true, user });
   } catch (err) { next(err); }
 };
@@ -136,6 +166,13 @@ export const unblockUser = async (req, res, next) => {
     ).select("alias nombre email bloqueado");
 
     if (!user) return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
+
+    if (user.email) {
+      sendUserUnblockedEmail({
+        to: user.email,
+        nombre: user.nombre,
+      }).catch(console.error);
+    }
 
     return res.json({ ok: true, user });
   } catch (err) { next(err); }
