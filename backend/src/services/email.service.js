@@ -1,11 +1,16 @@
-import { Resend } from "resend";
+import nodemailer from "nodemailer";
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = "CELIX <onboarding@resend.dev>";
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  auth: {
+    user: process.env.EMAIL_USER,    // tu cuenta gmail
+    pass: process.env.EMAIL_PASS,    // contraseña de aplicación (no la de gmail)
+  },
+});
 
 export async function sendPostHiddenEmail({ to, nombre, contenido }) {
-  await resend.emails.send({
-    from: FROM,
+  await transporter.sendMail({
+    from: `"CELIX" <${process.env.EMAIL_USER}>`,
     to,
     subject: "Tu publicación ha sido ocultada — CELIX",
     html: `
@@ -24,8 +29,8 @@ export async function sendPostHiddenEmail({ to, nombre, contenido }) {
 }
 
 export async function sendPostRestoredEmail({ to, nombre, contenido }) {
-  await resend.emails.send({
-    from: FROM,
+  await transporter.sendMail({
+    from: `"CELIX" <${process.env.EMAIL_USER}>`,
     to,
     subject: "Tu publicación ha sido restaurada — CELIX",
     html: `
@@ -43,8 +48,8 @@ export async function sendPostRestoredEmail({ to, nombre, contenido }) {
 }
 
 export async function sendUserBlockedEmail({ to, nombre, motivo }) {
-  await resend.emails.send({
-    from: FROM,
+  await transporter.sendMail({
+    from: `"CELIX" <${process.env.EMAIL_USER}>`,
     to,
     subject: "Tu cuenta ha sido bloqueada — CELIX",
     html: `
@@ -62,8 +67,8 @@ export async function sendUserBlockedEmail({ to, nombre, motivo }) {
 }
 
 export async function sendUserUnblockedEmail({ to, nombre }) {
-  await resend.emails.send({
-    from: FROM,
+  await transporter.sendMail({
+    from: `"CELIX" <${process.env.EMAIL_USER}>`,
     to,
     subject: "Tu cuenta ha sido desbloqueada — CELIX",
     html: `

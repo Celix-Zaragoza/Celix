@@ -134,23 +134,29 @@ export const listUsers = async (req, res, next) => {
 
 export const blockUser = async (req, res, next) => {
   try {
-    const user = await User.findByIdAndUpdate(
-      req.params.id,
-      { bloqueado: true },
-      { new: true }
-    ).select("alias nombre email bloqueado");
-
-    if (!user) return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
-    if (user._id.toString() === req.user._id.toString()) {
+    // ── Primero comprobar, luego actualizar ──
+    if (req.params.id === req.user._id.toString()) {
       return res.status(400).json({ ok: false, message: "No puedes bloquearte a ti mismo" });
     }
 
-    if (user.email) {
+    const user = await User.findByIdAndUpdate(
+      req.params.id,
+      { bloqueado: true },
+      { returnDocument: "after" }
+    ).select("alias nombre email bloqueado");
+
+    if (!user) return res.status(404).json({ ok: false, message: "Usuario no encontrado" });
+
+    if (user.email && typeof sendUserBlockedEmail === 'function') {
       sendUserBlockedEmail({
         to: user.email,
         nombre: user.nombre,
-        motivo: req.body.motivo ?? null,
-      }).catch(console.error);
+        motivo: req.body?.motivo ?? "No especificado",
+      }).catch(err => {
+        console.error("Error al enviar email de bloqueo:", err);
+      });
+    } else {
+      console.warn("No se pudo enviar el email: Función no definida o usuario sin correo.");
     }
 
     return res.json({ ok: true, user });
