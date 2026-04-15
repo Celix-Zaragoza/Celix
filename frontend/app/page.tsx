@@ -170,7 +170,7 @@ export default function Page() {
                   className="font-bold text-base px-8 py-6 h-auto rounded-xl"
                   style={{ backgroundColor: VERDE, color: "#0a1628" }}
                 >
-                  Empieza gratis →
+                  Empieza gratis
                 </Button>
                 <Button
                   size="lg"
@@ -360,7 +360,7 @@ export default function Page() {
             className="font-bold text-base px-10 py-6 h-auto rounded-xl"
             style={{ backgroundColor: "#0a1628", color: VERDE }}
           >
-            Crear cuenta gratuita →
+            Crear cuenta gratuita
           </Button>
         </div>
       </section>
@@ -391,7 +391,7 @@ export default function Page() {
             ))}
           </div>
           <div className="pt-8 text-center text-sm" style={{ color: TEXTO_MUTED, borderTop: "1px solid rgba(148,163,184,0.1)" }}>
-            © 2025 CELIX. Todos los derechos reservados. · Hecho con ❤️ en Zaragoza
+            © 2026 CELIX. Todos los derechos reservados. · Hecho con ❤️ en Zaragoza
           </div>
         </div>
       </footer>

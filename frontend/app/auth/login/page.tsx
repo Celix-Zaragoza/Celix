@@ -3,10 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Page() {
@@ -30,17 +27,11 @@ export default function Page() {
     try {
       const response = await fetch("http://localhost:3001/api/v1/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }),
       });
       const data = await response.json();
       if (data.ok) {
-        console.log("✅Esto devuelve el login", data);
         localStorage.setItem("token", data.token);
         login({ ...data.user, isAdmin: data.user.rol === "ADMIN" });
         toast.success("¡Bienvenido a CELIX!");
@@ -55,100 +46,201 @@ export default function Page() {
     }
   };
 
+  const inputBase: React.CSSProperties = {
+    backgroundColor: "rgba(255,255,255,0.07)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: "#f1f5f9",
+  };
+
   return (
-    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-[#1e293b] rounded-2xl shadow-2xl p-8 border border-[rgba(148,163,184,0.2)]">
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-[#13ec80] mb-2 uppercase tracking-wide">CELIX</h1>
-            <p className="text-[#94a3b8]">Inicia sesión en tu cuenta</p>
+    <div className="min-h-screen flex" style={{ backgroundColor: "#0d1f16" }}>
+
+      {/* ── Panel izquierdo (solo desktop) ── */}
+      <div
+        className="hidden lg:flex flex-col justify-between w-[45%] relative overflow-hidden p-10"
+        style={{ backgroundColor: "#0f2318" }}
+      >
+        {/* Fondo decorativo */}
+        <div
+          className="absolute inset-0 opacity-20"
+          style={{ background: "radial-gradient(ellipse at 60% 60%, #13ec80 0%, transparent 70%)" }}
+        />
+
+        {/* Logo */}
+        <div className="relative flex items-center gap-2 z-10">
+          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#13ec80" }}>
+            <span className="text-lg font-black" style={{ color: "#0a1628" }}>⚡</span>
+          </div>
+          <span className="text-xl font-black tracking-widest" style={{ color: "#13ec80" }}>CELIX</span>
+        </div>
+
+        {/* Texto central */}
+        <div className="relative z-10">
+          <p className="text-sm font-semibold mb-3 uppercase tracking-widest" style={{ color: "#13ec80" }}>
+            Red social deportiva
+          </p>
+          <h1 className="text-5xl font-black leading-tight mb-6" style={{ color: "#f1f5f9" }}>
+            SUPERA TUS{" "}
+            <span style={{ color: "#13ec80" }}>LÍMITES</span>
+          </h1>
+          <p className="text-base leading-relaxed mb-8" style={{ color: "rgba(241,245,249,0.65)" }}>
+            Únete a la plataforma líder en optimización deportiva. Registra tus progresos y conecta con la comunidad en Zaragoza.
+          </p>
+
+          {/* Stats */}
+          <div className="flex items-center gap-3">
+            <div className="flex -space-x-2">
+              {["#13ec80", "#10d671", "#0ec060"].map((c, i) => (
+                <div
+                  key={i}
+                  className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold"
+                  style={{ backgroundColor: c, borderColor: "#0f2318", color: "#0a1628" }}
+                >
+                  {["C", "M", "J"][i]}
+                </div>
+              ))}
+            </div>
+            <p className="text-sm" style={{ color: "rgba(241,245,249,0.55)" }}>
+              +2.000 atletas en Zaragoza ya entrenan con nosotros
+            </p>
+          </div>
+        </div>
+
+        {/* Balón */}
+        <div className="relative z-10 flex justify-center">
+          <div
+            className="w-56 h-56 rounded-full flex items-center justify-center"
+            style={{
+              background: "radial-gradient(circle at 35% 35%, #b5651d, #3d1a00)",
+              boxShadow: "0 0 60px rgba(19,236,128,0.15), inset 0 0 40px rgba(0,0,0,0.4)",
+            }}
+          >
+            <span style={{ fontSize: "7rem" }}>🏀</span>
+          </div>
+        </div>
+
+        {/* Volver */}
+        <button
+          onClick={() => router.push("/")}
+          className="relative z-10 text-sm self-start hover:underline"
+          style={{ color: "rgba(148,163,184,0.6)" }}
+        >
+          ← Volver al inicio
+        </button>
+      </div>
+
+      {/* ── Panel derecho — Formulario ── */}
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+        <div className="w-full max-w-md">
+
+          {/* Logo móvil */}
+          <div className="flex items-center gap-2 mb-8 lg:hidden">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#13ec80" }}>
+              <span className="text-lg font-black" style={{ color: "#0a1628" }}>⚡</span>
+            </div>
+            <span className="text-xl font-black tracking-widest" style={{ color: "#13ec80" }}>CELIX</span>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email">Correo electrónico</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="tu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-12"
-              />
+          {/* Header */}
+          <div className="mb-8">
+            <h2 className="text-3xl font-black mb-2" style={{ color: "#f1f5f9" }}>Iniciar Sesión</h2>
+            <p className="text-sm" style={{ color: "#94a3b8" }}>Bienvenido de nuevo. Por favor, inicie sesión.</p>
+          </div>
+
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Email */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>
+                Correo electrónico
+              </label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#4ade80" }} />
+                <input
+                  type="email"
+                  placeholder="correo@ejemplo.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  required
+                  className="w-full h-12 pl-10 pr-4 rounded-lg text-sm outline-none transition-all"
+                  style={inputBase}
+                  onFocus={(e) => (e.target.style.borderColor = "#13ec80")}
+                  onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+            {/* Contraseña */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>
+                Contraseña
+              </label>
               <div className="relative">
-                <Input
-                  id="password"
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#4ade80" }} />
+                <input
                   type={showPassword ? "text" : "password"}
                   placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-12 pr-10"
+                  required
+                  className="w-full h-12 pl-10 pr-10 rounded-lg text-sm outline-none transition-all"
+                  style={inputBase}
+                  onFocus={(e) => (e.target.style.borderColor = "#13ec80")}
+                  onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                  onClick={() => setShowPassword((v) => !v)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2"
+                  style={{ color: "#94a3b8" }}
                 >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="rounded border-gray-300" />
-                <span className="text-[#94a3b8]">Recordarme</span>
-              </label>
-              <a href="#" className="text-[#13ec80] hover:underline">
-                ¿Olvidaste tu contraseña?
-              </a>
-            </div>
-
-            <Button
+            {/* Botón */}
+            <button
               type="submit"
-              className="w-full h-12 text-lg bg-[#13ec80] text-[#102219] hover:bg-[#10d671]"
               disabled={loading}
+              className="w-full h-12 rounded-lg font-bold text-base flex items-center justify-center gap-2 transition-all mt-2"
+              style={{
+                backgroundColor: loading ? "#10d671" : "#13ec80",
+                color: "#0a1628",
+                opacity: loading ? 0.8 : 1,
+              }}
             >
-              {loading ? "Iniciando sesión..." : "Iniciar sesión"}
-            </Button>
-          </form>
+              {loading ? "Iniciando sesión..." : <>Iniciar Sesión <span>→</span></>}
+            </button>
 
-          {/* Demo credentials */}
-          <div className="mt-6 p-4 bg-[#334155] rounded-lg border border-[rgba(148,163,184,0.2)]">
-            <p className="text-sm text-[#13ec80] mb-2 font-medium">💡 Credenciales de prueba:</p>
-            <div className="text-sm text-[#f1f5f9] space-y-1">
-              <p>Usuario: cualquier@email.com</p>
-              <p>Admin: admin@celix.com</p>
-              <p>Contraseña: cualquier texto</p>
-            </div>
-          </div>
-
-          {/* Register Link */}
-          <div className="mt-6 text-center">
-            <p className="text-[#94a3b8]">
-              ¿No tienes cuenta?{" "}
+            {/* Registro link */}
+            <p className="text-center text-sm pt-1" style={{ color: "#94a3b8" }}>
+              ¿No tienes una cuenta?{" "}
               <button
                 type="button"
                 onClick={() => router.push("/auth/register")}
-                className="text-[#13ec80] hover:underline font-medium"
+                className="font-semibold hover:underline"
+                style={{ color: "#13ec80" }}
               >
-                Regístrate aquí
+                Regístrate
               </button>
             </p>
-          </div>
 
-          {/* Back to home */}
-          <div className="mt-4 text-center">
+            {/* Términos */}
+            <p className="text-center text-xs leading-relaxed pt-2" style={{ color: "rgba(148,163,184,0.6)" }}>
+              Al registrarte, confirmas que has leído y aceptas nuestra{" "}
+              <a href="#" className="underline" style={{ color: "rgba(148,163,184,0.8)" }}>Política de Privacidad</a>
+              {" "}y{" "}
+              <a href="#" className="underline" style={{ color: "rgba(148,163,184,0.8)" }}>Términos de Servicio</a>.
+              Datos procesados conforme a la normativa vigente en el municipio de Zaragoza, España.
+            </p>
+          </form>
+
+          {/* Volver móvil */}
+          <div className="mt-6 text-center lg:hidden">
             <button
-              type="button"
               onClick={() => router.push("/")}
-              className="text-[#94a3b8] hover:text-[#f1f5f9] text-sm"
+              className="text-sm"
+              style={{ color: "rgba(148,163,184,0.6)" }}
             >
               ← Volver al inicio
             </button>
