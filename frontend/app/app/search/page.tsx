@@ -1,11 +1,8 @@
 "use client";
 
-import { useState } from "react";
-import { useEffect } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "../../components/ui/input";
-import { Button } from "../../components/ui/button";
-import { Search, UserPlus } from "lucide-react";
+import { Search, MapPin, UserPlus } from "lucide-react";
 
 type DeporteNivel = {
   deporte: string;
@@ -28,8 +25,7 @@ export default function Page() {
   const [searchQuery, setSearchQuery] = useState("");
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const router = useRouter();
-  const token = localStorage.getItem("token");
-
+  const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
@@ -38,7 +34,7 @@ export default function Page() {
       } else {
         fetchUsuarios(searchQuery);
       }
-    }, 400); // 400ms es un buen equilibrio
+    }, 400);
 
     return () => clearTimeout(delayDebounce);
   }, [searchQuery]);
@@ -46,46 +42,50 @@ export default function Page() {
   const fetchUsuarios = async (query: string) => {
     try {
       const res = await fetch(`http://localhost:3001/api/v1/users/search?q=${query}`, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+        headers: { Authorization: `Bearer ${token}` },
       });
-      if (!res.ok) {
-        console.error("Error al buscar usuarios:", res.statusText);
-        throw new Error("Error al buscar usuarios");
-      }
+      if (!res.ok) throw new Error("Error al buscar usuarios");
       const data = await res.json();
-      console.log("Usuarios encontrados:", data.users);
       setUsuarios(data.users);
-      console.log("Usuarios actualizados en estado:", usuarios);
     } catch (error) {
       console.error(error);
       setUsuarios([]);
     }
   };
 
-  const handleSearch = (query: string) => {
-    setSearchQuery(query);
-  };
-
   const goProfile = (id: string | number) => router.push(`/app/profile/${id}`);
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-2xl mx-auto">
+      {/* Header */}
       <div className="mb-6">
-        <h1 className="text-3xl font-bold text-[#f1f5f9] mb-2">Buscar usuarios</h1>
-        <p className="text-[#94a3b8]">Encuentra deportistas en Zaragoza</p>
+        <h1 className="text-3xl font-black mb-1" style={{ color: "#f1f5f9" }}>
+          Buscar usuarios
+        </h1>
+        <p className="text-sm" style={{ color: "#94a3b8" }}>
+          Encuentra deportistas en Zaragoza
+        </p>
       </div>
 
       {/* Search Bar */}
       <div className="relative mb-6">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-[#94a3b8]" />
-        <Input
+        <Search
+          className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5"
+          style={{ color: "#13ec80" }}
+        />
+        <input
           type="text"
           placeholder="Buscar por nombre, alias o deporte..."
           value={searchQuery}
-          onChange={(e) => handleSearch(e.target.value)}
-          className="pl-12 h-14 text-lg"
+          onChange={(e) => setSearchQuery(e.target.value)}
+          className="w-full h-12 pl-12 pr-4 rounded-xl text-sm outline-none transition-all"
+          style={{
+            backgroundColor: "rgba(255,255,255,0.06)",
+            border: "1px solid rgba(255,255,255,0.1)",
+            color: "#f1f5f9",
+          }}
+          onFocus={(e) => (e.target.style.borderColor = "#13ec80")}
+          onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
         />
       </div>
 
@@ -95,48 +95,101 @@ export default function Page() {
           usuarios.map((usuario) => (
             <div
               key={usuario.id}
-              className="bg-[#1e293b] rounded-xl shadow-sm border border-[rgba(148,163,184,0.2)] p-4 hover:shadow-md transition-shadow"
+              className="rounded-2xl p-4 transition-all cursor-pointer"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.04)",
+                border: "1px solid rgba(255,255,255,0.07)",
+              }}
+              onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(19,236,128,0.3)")}
+              onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.07)")}
+              onClick={() => goProfile(usuario.id)}
             >
               <div className="flex items-center gap-4">
+                {/* Avatar */}
                 <img
-                  src={usuario.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${usuario.nombre}`}
+                  src={
+                    usuario.avatar ||
+                    `https://api.dicebear.com/7.x/initials/svg?seed=${usuario.nombre}`
+                  }
                   alt={usuario.nombre}
-                  className="w-20 h-20 rounded-full object-cover border-4 border-[#13ec80]/30"
+                  className="w-14 h-14 rounded-full object-cover flex-shrink-0"
+                  style={{ border: "2px solid rgba(19,236,128,0.4)" }}
                 />
-                <div className="flex-1">
-                  <h3
-                    className="font-bold text-[#f1f5f9] cursor-pointer hover:underline"
-                    onClick={() => goProfile(usuario.id)}
-                  >
-                    {usuario.nombre}
-                  </h3>
-                  <p className="text-sm text-[#94a3b8]">@{usuario.alias}</p>
-                  <div className="flex flex-wrap gap-1 mt-2">
+
+                {/* Info */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-0.5">
+                    <h3 className="font-bold text-sm truncate" style={{ color: "#f1f5f9" }}>
+                      {usuario.nombre}
+                    </h3>
+                    {usuario.zona && (
+                      <span className="flex items-center gap-1 text-xs flex-shrink-0" style={{ color: "#94a3b8" }}>
+                        <MapPin className="w-3 h-3" />
+                        {usuario.zona}
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-xs mb-2" style={{ color: "#94a3b8" }}>
+                    @{usuario.alias}
+                  </p>
+                  <div className="flex flex-wrap gap-1">
                     {usuario.deportesNivel?.slice(0, 3).map((d) => (
                       <span
                         key={d.deporte}
-                        className="px-2 py-0.5 bg-[#13ec80] text-[#102219] text-xs font-medium rounded-full"
+                        className="px-2 py-0.5 text-xs font-semibold rounded-full"
+                        style={{
+                          backgroundColor: "rgba(19,236,128,0.12)",
+                          color: "#13ec80",
+                          border: "1px solid rgba(19,236,128,0.25)",
+                        }}
                       >
                         {d.deporte}
                       </span>
                     ))}
                   </div>
                 </div>
-                <Button
-                  onClick={() => goProfile(usuario.id)}
-                  size="sm"
-                  className="bg-[#13ec80] text-[#102219] hover:bg-[#10d671]"
+
+                {/* Botón */}
+                <button
+                  onClick={(e) => { e.stopPropagation(); goProfile(usuario.id); }}
+                  className="flex items-center gap-1.5 px-3 py-2 rounded-xl text-xs font-semibold flex-shrink-0 transition-all"
+                  style={{
+                    backgroundColor: "rgba(19,236,128,0.12)",
+                    color: "#13ec80",
+                    border: "1px solid rgba(19,236,128,0.25)",
+                  }}
                 >
-                  <UserPlus className="w-4 h-4 mr-2" />
+                  <UserPlus className="w-3.5 h-3.5" />
                   Ver perfil
-                </Button>
+                </button>
               </div>
             </div>
           ))
+        ) : searchQuery ? (
+          <div
+            className="rounded-2xl p-12 text-center"
+            style={{
+              backgroundColor: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            <Search className="w-12 h-12 mx-auto mb-3" style={{ color: "rgba(148,163,184,0.3)" }} />
+            <p className="text-sm" style={{ color: "#94a3b8" }}>
+              No se encontraron usuarios para <span style={{ color: "#f1f5f9" }}>"{searchQuery}"</span>
+            </p>
+          </div>
         ) : (
-          <div className="bg-[#1e293b] rounded-xl shadow-sm border border-[rgba(148,163,184,0.2)] p-12 text-center">
-            <Search className="w-16 h-16 text-[#94a3b8] mx-auto mb-4" />
-            <p className="text-[#94a3b8]">No se encontraron usuarios</p>
+          <div
+            className="rounded-2xl p-12 text-center"
+            style={{
+              backgroundColor: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.07)",
+            }}
+          >
+            <Search className="w-12 h-12 mx-auto mb-3" style={{ color: "rgba(148,163,184,0.3)" }} />
+            <p className="text-sm" style={{ color: "#94a3b8" }}>
+              Escribe un nombre o alias para buscar
+            </p>
           </div>
         )}
       </div>

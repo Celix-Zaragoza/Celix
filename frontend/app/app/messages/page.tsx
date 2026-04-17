@@ -2,13 +2,10 @@
 
 import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { Input } from "../../components/ui/input";
-import { Button } from "../../components/ui/button";
-import { Search, Plus } from "lucide-react";
+import { Search, Plus, X, MessageCircle, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { useAuth } from "../../context/AuthContext";
-import { X } from "lucide-react";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
@@ -46,13 +43,11 @@ export default function Page() {
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState(true);
 
-  // Modal nueva conversación
   const [showNewChat, setShowNewChat] = useState(false);
   const [userSearch, setUserSearch] = useState("");
   const [userResults, setUserResults] = useState<UsuarioBusqueda[]>([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
 
-  // ── Cargar conversaciones ──────────────────────────────────────────────────
   const fetchConversaciones = useCallback(async () => {
     try {
       const res = await fetch(`${API}/api/v1/conversations`, {
@@ -81,16 +76,10 @@ export default function Page() {
     }
   }, [user?.id]);
 
-  useEffect(() => {
-    fetchConversaciones();
-  }, [fetchConversaciones]);
+  useEffect(() => { fetchConversaciones(); }, [fetchConversaciones]);
 
-  // ── Buscar usuarios para nueva conversación ────────────────────────────────
   useEffect(() => {
-    if (!userSearch.trim()) {
-      setUserResults([]);
-      return;
-    }
+    if (!userSearch.trim()) { setUserResults([]); return; }
     const timer = setTimeout(async () => {
       setSearchingUsers(true);
       try {
@@ -101,16 +90,14 @@ export default function Page() {
         const data = await res.json();
         if (data.ok) setUserResults(data.users ?? []);
       } catch (err) {
-        console.error("Error buscando usuarios:", err);
+        console.error(err);
       } finally {
         setSearchingUsers(false);
       }
     }, 400);
-
     return () => clearTimeout(timer);
   }, [userSearch]);
 
-  // ── Iniciar o abrir conversación ───────────────────────────────────────────
   const handleStartConversation = async (userId: string) => {
     try {
       const res = await fetch(`${API}/api/v1/conversations`, {
@@ -128,11 +115,10 @@ export default function Page() {
         router.push(`/app/messages/${data.conversation.id}`);
       }
     } catch (err) {
-      console.error("Error creando conversación:", err);
+      console.error(err);
     }
   };
 
-  // ── Filtro lista ───────────────────────────────────────────────────────────
   const filteredConversaciones = searchQuery
     ? conversaciones.filter((c) => {
         const other = getOtherParticipant(c, user?.id ?? "");
@@ -143,39 +129,69 @@ export default function Page() {
       })
     : conversaciones;
 
-  // ── Render ─────────────────────────────────────────────────────────────────
+  const inputStyle: React.CSSProperties = {
+    backgroundColor: "rgba(255,255,255,0.06)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: "#f1f5f9",
+  };
+
   return (
     <div className="max-w-7xl mx-auto h-[calc(100vh-12rem)]">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full flex">
-
-        {/* Lista de conversaciones */}
-        <div className="w-full md:w-96 border-r flex-shrink-0 flex flex-col">
-          <div className="p-4 border-b">
+      <div
+        className="rounded-2xl overflow-hidden h-full flex"
+        style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+      >
+        {/* ── Lista de conversaciones ── */}
+        <div
+          className="w-full md:w-96 flex-shrink-0 flex flex-col"
+          style={{ borderRight: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          {/* Header */}
+          <div className="p-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-2xl font-bold text-gray-900">Mensajes</h2>
-              <Button size="sm" onClick={() => setShowNewChat(true)} className="flex items-center gap-1">
-                <Plus className="w-4 h-4" />
+              <h2 className="text-xl font-black" style={{ color: "#f1f5f9" }}>Mensajes</h2>
+              <button
+                onClick={() => setShowNewChat(true)}
+                className="flex items-center gap-1.5 px-3 h-8 rounded-xl text-xs font-semibold transition-all"
+                style={{
+                  backgroundColor: "rgba(19,236,128,0.12)",
+                  color: "#13ec80",
+                  border: "1px solid rgba(19,236,128,0.25)",
+                }}
+              >
+                <Plus className="w-3.5 h-3.5" />
                 Nuevo
-              </Button>
+              </button>
             </div>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#13ec80" }} />
+              <input
                 type="text"
                 placeholder="Buscar conversaciones..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="w-full h-10 pl-10 pr-4 rounded-xl text-sm outline-none transition-all"
+                style={inputStyle}
+                onFocus={(e) => (e.target.style.borderColor = "#13ec80")}
+                onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
               />
             </div>
           </div>
 
+          {/* Lista */}
           <div className="flex-1 overflow-y-auto">
             {loading && (
-              <p className="text-center text-gray-400 text-sm mt-8">Cargando conversaciones...</p>
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#13ec80" }} />
+              </div>
             )}
             {!loading && filteredConversaciones.length === 0 && (
-              <p className="text-center text-gray-400 text-sm mt-8">No hay conversaciones todavía</p>
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <MessageCircle className="w-10 h-10 mb-3" style={{ color: "rgba(148,163,184,0.3)" }} />
+                <p className="text-sm" style={{ color: "#94a3b8" }}>
+                  {searchQuery ? "No se encontraron conversaciones" : "No hay conversaciones todavía"}
+                </p>
+              </div>
             )}
             {filteredConversaciones.map((conv) => {
               const other = getOtherParticipant(conv, user?.id ?? "");
@@ -187,26 +203,39 @@ export default function Page() {
                 <button
                   key={conv.id}
                   onClick={() => router.push(`/app/messages/${conv.id}`)}
-                  className="w-full p-4 flex items-start gap-3 hover:bg-gray-50 transition-colors border-b"
+                  className="w-full p-4 flex items-start gap-3 transition-all"
+                  style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                 >
-                  <div className="relative">
+                  <div className="relative flex-shrink-0">
                     <img
                       src={other.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${other.nombre}`}
                       alt={other.nombre}
-                      className="w-14 h-14 rounded-full object-cover border-4 border-[#13ec80]/30"
+                      className="w-11 h-11 rounded-full object-cover"
+                      style={{ border: "2px solid rgba(19,236,128,0.3)" }}
                     />
                     {conv.noLeidos > 0 && (
-                      <div className="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
+                      <div
+                        className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
+                        style={{ backgroundColor: "#13ec80", color: "#0a1628" }}
+                      >
                         {conv.noLeidos}
                       </div>
                     )}
                   </div>
                   <div className="flex-1 text-left min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-bold text-gray-900 truncate">{other.nombre}</h3>
-                      <span className="text-xs text-gray-500 flex-shrink-0">{timeAgo}</span>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <h3 className="font-semibold text-sm truncate" style={{ color: "#f1f5f9" }}>
+                        {other.nombre}
+                      </h3>
+                      <span className="text-xs flex-shrink-0 ml-2" style={{ color: "rgba(148,163,184,0.5)" }}>
+                        {timeAgo}
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-600 truncate">{conv.ultimoMensaje || "Sin mensajes aún"}</p>
+                    <p className="text-xs truncate" style={{ color: "#94a3b8" }}>
+                      {conv.ultimoMensaje || "Sin mensajes aún"}
+                    </p>
                   </div>
                 </button>
               );
@@ -214,59 +243,86 @@ export default function Page() {
           </div>
         </div>
 
-        {/* Empty state desktop */}
-        <div className="hidden md:flex flex-1 items-center justify-center text-gray-500">
+        {/* ── Empty state desktop ── */}
+        <div className="hidden md:flex flex-1 items-center justify-center">
           <div className="text-center">
-            <p className="text-lg mb-2">Selecciona una conversación</p>
-            <p className="text-sm">o inicia una nueva con el botón Nuevo</p>
+            <MessageCircle className="w-14 h-14 mx-auto mb-4" style={{ color: "rgba(148,163,184,0.15)" }} />
+            <p className="font-semibold mb-1" style={{ color: "#f1f5f9" }}>Selecciona una conversación</p>
+            <p className="text-sm" style={{ color: "#94a3b8" }}>o inicia una nueva con el botón Nuevo</p>
           </div>
         </div>
       </div>
 
-      {/* Modal nueva conversación */}
+      {/* ── Modal nueva conversación ── */}
       {showNewChat && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-xl shadow-xl w-full max-w-md mx-4 p-6">
-            <div className="flex items-center justify-between mb-4">
-              <h3 className="text-lg font-bold text-gray-900">Nueva conversación</h3>
-              <button onClick={() => { setShowNewChat(false); setUserSearch(""); setUserResults([]); }}>
-                <X className="w-5 h-5 text-gray-500" />
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50 p-4"
+          style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+          onClick={() => { setShowNewChat(false); setUserSearch(""); setUserResults([]); }}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl p-6"
+            style={{ backgroundColor: "#0f2318", border: "1px solid rgba(255,255,255,0.1)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header modal */}
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-black" style={{ color: "#f1f5f9" }}>Nueva conversación</h3>
+              <button
+                onClick={() => { setShowNewChat(false); setUserSearch(""); setUserResults([]); }}
+                className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "#94a3b8" }}
+              >
+                <X className="w-4 h-4" />
               </button>
             </div>
 
+            {/* Buscador modal */}
             <div className="relative mb-4">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#13ec80" }} />
+              <input
                 type="text"
                 placeholder="Buscar usuario por nombre o alias..."
                 value={userSearch}
                 onChange={(e) => setUserSearch(e.target.value)}
-                className="pl-10"
                 autoFocus
+                className="w-full h-11 pl-10 pr-4 rounded-xl text-sm outline-none transition-all"
+                style={inputStyle}
+                onFocus={(e) => (e.target.style.borderColor = "#13ec80")}
+                onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
               />
             </div>
 
-            <div className="max-h-64 overflow-y-auto">
+            {/* Resultados modal */}
+            <div className="max-h-64 overflow-y-auto space-y-1">
               {searchingUsers && (
-                <p className="text-center text-gray-400 text-sm py-4">Buscando...</p>
+                <div className="flex justify-center py-6">
+                  <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#13ec80" }} />
+                </div>
               )}
               {!searchingUsers && userSearch && userResults.length === 0 && (
-                <p className="text-center text-gray-400 text-sm py-4">No se encontraron usuarios</p>
+                <p className="text-center text-sm py-6" style={{ color: "#94a3b8" }}>
+                  No se encontraron usuarios
+                </p>
               )}
               {userResults.map((u) => (
                 <button
                   key={u.id}
                   onClick={() => handleStartConversation(u.id)}
-                  className="w-full flex items-center gap-3 p-3 hover:bg-gray-50 rounded-lg transition-colors"
+                  className="w-full flex items-center gap-3 p-3 rounded-xl transition-all"
+                  style={{ backgroundColor: "rgba(255,255,255,0.04)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(19,236,128,0.08)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)")}
                 >
-                <img
-                  src={u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${u.nombre}`}
-                  alt={u.nombre}
-                  className="w-10 h-10 rounded-full object-cover"
-                />
+                  <img
+                    src={u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${u.nombre}`}
+                    alt={u.nombre}
+                    className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                    style={{ border: "2px solid rgba(19,236,128,0.3)" }}
+                  />
                   <div className="text-left">
-                    <p className="font-medium text-gray-900">{u.nombre}</p>
-                    <p className="text-sm text-gray-500">@{u.alias}</p>
+                    <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>{u.nombre}</p>
+                    <p className="text-xs" style={{ color: "#94a3b8" }}>@{u.alias}</p>
                   </div>
                 </button>
               ))}
