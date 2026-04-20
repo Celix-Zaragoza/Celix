@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Search, MapPin, UserPlus } from "lucide-react";
 
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+
 type DeporteNivel = {
   deporte: string;
   nivel: string;
@@ -41,7 +43,7 @@ export default function Page() {
 
   const fetchUsuarios = async (query: string) => {
     try {
-      const res = await fetch(`http://localhost:3001/api/v1/users/search?q=${query}`, {
+      const res = await fetch(`${API}/users/search?q=${query}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Error al buscar usuarios");
