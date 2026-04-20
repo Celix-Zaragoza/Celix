@@ -11,10 +11,15 @@ const makeValidator = (schema, source) => {
     const result = schema.safeParse(req[source]);
 
     if (!result.success) {
+      const formattedErrors = formatZodErrors(result.error.issues);
+      const firstErrorMessage = formattedErrors.length > 0 
+        ? formattedErrors[0].message 
+        : `Invalid ${source}`;
+
       return res.status(400).json({
         ok: false,
-        message: `Invalid ${source}`,
-        errors: formatZodErrors(result.error.issues),
+        message: firstErrorMessage, 
+        errors: formattedErrors,
       });
     }
 

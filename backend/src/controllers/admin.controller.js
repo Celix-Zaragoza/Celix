@@ -30,10 +30,16 @@ export const listPosts = async (req, res, next) => {
       Post.countDocuments(filter),
     ]);
 
+    const [totalVisibles, totalOcultas] = await Promise.all([
+      Post.countDocuments({ eliminado: false, oculto: false }),
+      Post.countDocuments({ eliminado: false, oculto: true }),
+    ]);
+
     return res.json({
       ok: true,
       posts,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      stats: { visibles: totalVisibles, ocultas: totalOcultas },
     });
   } catch (err) { next(err); }
 };
@@ -124,10 +130,16 @@ export const listUsers = async (req, res, next) => {
       User.countDocuments(filter),
     ]);
 
+    const [totalActivos, totalBloqueados] = await Promise.all([
+      User.countDocuments({ bloqueado: false }),
+      User.countDocuments({ bloqueado: true }),
+    ]);
+
     return res.json({
       ok: true,
       users,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      stats: { activos: totalActivos, bloqueados: totalBloqueados },
     });
   } catch (err) { next(err); }
 };
@@ -202,10 +214,16 @@ export const listEvents = async (req, res, next) => {
       Event.countDocuments(filter),
     ]);
 
+    const [totalVisibles, totalOcultos] = await Promise.all([
+      Event.countDocuments({ oculto: false }),
+      Event.countDocuments({ oculto: true }),
+    ]);
+
     return res.json({
       ok: true,
       events,
       pagination: { page, limit, total, pages: Math.ceil(total / limit) },
+      stats: { visibles: totalVisibles, ocultos: totalOcultos },
     });
   } catch (err) { next(err); }
 };

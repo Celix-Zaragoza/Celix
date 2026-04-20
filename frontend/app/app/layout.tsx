@@ -1,15 +1,17 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { Home, Search, PlusSquare, MessageCircle, User, Calendar, LogOut, Shield } from "lucide-react";
 import { Button } from "../components/ui/button";
+import { ConfirmModal } from "../components/ConfirmModal";
 
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, logout, user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
+  const [showLogoutModal, setShowLogoutModal] = useState(false);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -19,7 +21,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   if (!isAuthenticated) return null;
 
-  const handleLogout = () => {
+  const confirmLogout = () => {
     delete localStorage.token;
     logout();
     router.push("/");
@@ -84,7 +86,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={handleLogout}
+                onClick={() => setShowLogoutModal(true)}
                 className="flex items-center gap-2 text-red-400 hover:bg-[#1e293b] hover:text-red-300"
               >
                 <LogOut className="w-5 h-5" />
@@ -108,16 +110,7 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => router.push("/app/profile")}
-                className="text-[#f1f5f9] hover:bg-[#1e293b]"
-                title="Mi perfil"
-              >
-                <User className="w-5 h-5" />
-              </Button>
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleLogout}
+                onClick={() => setShowLogoutModal(true)}
                 className="text-red-400 hover:bg-[#1e293b] hover:text-red-300"
                 title="Cerrar sesión"
               >
@@ -149,6 +142,18 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
           ))}
         </div>
       </nav>
+
+      {/* Modal confirmación logout */}
+      <ConfirmModal
+        open={showLogoutModal}
+        title="Cerrar sesión"
+        description="¿Estás seguro de que quieres cerrar sesión? Tendrás que volver a iniciar sesión para acceder a tu cuenta."
+        confirmLabel="Cerrar sesión"
+        cancelLabel="Cancelar"
+        danger={true}
+        onConfirm={confirmLogout}
+        onCancel={() => setShowLogoutModal(false)}
+      />
     </div>
   );
 }

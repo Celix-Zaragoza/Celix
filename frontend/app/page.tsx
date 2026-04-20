@@ -2,9 +2,8 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "./components/ui/button";
 import {
-  Activity, Users, Calendar, MapPin, TrendingUp,
+  Activity, Calendar, MapPin, TrendingUp,
   MessageCircle, ChevronDown, Star, Zap, Shield,
 } from "lucide-react";
 
@@ -86,6 +85,8 @@ const features = [
   },
 ];
 
+// ── Componentes reutilizables ──────────────────────────────────────────────────
+
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
@@ -111,45 +112,166 @@ function FaqItem({ q, a }: { q: string; a: string }) {
   );
 }
 
+function BtnPrimary({ children, onClick, size = "md" }: { children: React.ReactNode; onClick: () => void; size?: "md" | "lg" }) {
+  const [hover, setHover] = useState(false);
+  const pad = size === "lg" ? "px-8 py-4 text-base" : "px-5 py-2.5 text-sm";
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className={`${pad} rounded-xl font-bold transition-all duration-200`}
+      style={{
+        backgroundColor: hover ? VERDE_DARK : VERDE,
+        color: "#0a1628",
+        transform: hover ? "translateY(-1px)" : "translateY(0)",
+        boxShadow: hover ? "0 8px 24px rgba(19,236,128,0.3)" : "none",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function BtnOutline({ children, onClick, size = "md" }: { children: React.ReactNode; onClick: () => void; size?: "md" | "lg" }) {
+  const [hover, setHover] = useState(false);
+  const pad = size === "lg" ? "px-8 py-4 text-base" : "px-5 py-2.5 text-sm";
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className={`${pad} rounded-xl font-semibold transition-all duration-200`}
+      style={{
+        backgroundColor: hover ? "rgba(19,236,128,0.08)" : "transparent",
+        color: hover ? VERDE : TEXTO,
+        border: `1px solid ${hover ? "rgba(19,236,128,0.5)" : "rgba(148,163,184,0.3)"}`,
+        transform: hover ? "translateY(-1px)" : "translateY(0)",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function BtnGhost({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="px-4 py-2 rounded-lg text-sm font-medium transition-all duration-200"
+      style={{
+        backgroundColor: hover ? "rgba(255,255,255,0.06)" : "transparent",
+        color: hover ? TEXTO : TEXTO_MUTED,
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function BtnDark({ children, onClick }: { children: React.ReactNode; onClick: () => void }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <button
+      onClick={onClick}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+      className="px-10 py-4 rounded-xl font-bold text-base transition-all duration-200"
+      style={{
+        backgroundColor: hover ? "#0f2a4a" : "#0a1628",
+        color: VERDE,
+        transform: hover ? "translateY(-2px)" : "translateY(0)",
+        boxShadow: hover ? "0 12px 32px rgba(0,0,0,0.4)" : "none",
+      }}
+    >
+      {children}
+    </button>
+  );
+}
+
+function FeatureCard({ f }: { f: typeof features[0] }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <div
+      className="rounded-2xl p-6 transition-all duration-300 cursor-default"
+      style={{
+        backgroundColor: hover ? "rgba(19,236,128,0.05)" : FONDO3,
+        border: `1px solid ${hover ? "rgba(19,236,128,0.25)" : "rgba(148,163,184,0.1)"}`,
+        transform: hover ? "translateY(-4px)" : "translateY(0)",
+      }}
+      onMouseEnter={() => setHover(true)}
+      onMouseLeave={() => setHover(false)}
+    >
+      <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5" style={{ backgroundColor: "rgba(19,236,128,0.1)" }}>
+        <f.icon className="w-6 h-6" style={{ color: VERDE }} />
+      </div>
+      <h3 className="font-bold text-lg mb-2" style={{ color: TEXTO }}>{f.titulo}</h3>
+      <p className="text-sm leading-relaxed" style={{ color: TEXTO_MUTED }}>{f.desc}</p>
+    </div>
+  );
+}
+
+function FooterLink({ link }: { link: string }) {
+  const [hover, setHover] = useState(false);
+  return (
+    <li>
+      <a
+        href="#"
+        className="text-sm transition-colors duration-200"
+        style={{ color: hover ? TEXTO : TEXTO_MUTED }}
+        onMouseEnter={() => setHover(true)}
+        onMouseLeave={() => setHover(false)}
+      >
+        {link}
+      </a>
+    </li>
+  );
+}
+
+// ── Page ──────────────────────────────────────────────────────────────────────
+
 export default function Page() {
   const router = useRouter();
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: FONDO, fontFamily: "'DM Sans', sans-serif" }}>
+    <div className="min-h-screen" style={{ backgroundColor: FONDO }}>
 
       {/* ── HEADER ── */}
-      <header className="fixed top-0 w-full z-50" style={{ backgroundColor: "rgba(10,22,40,0.85)", backdropFilter: "blur(12px)", borderBottom: "1px solid rgba(19,236,128,0.1)" }}>
+      <header
+        className="fixed top-0 w-full z-50"
+        style={{
+          backgroundColor: "rgba(10,22,40,0.85)",
+          backdropFilter: "blur(12px)",
+          borderBottom: "1px solid rgba(19,236,128,0.1)",
+        }}
+      >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
           <span className="text-2xl font-black tracking-widest" style={{ color: VERDE }}>CELIX</span>
-          <nav className="hidden md:flex items-center gap-8">
+          <nav className="hidden md:flex items-center gap-2">
             {["Características", "Eventos", "Comunidad"].map((item) => (
-              <a key={item} href="#" className="text-sm font-medium transition-colors hover:text-white" style={{ color: TEXTO_MUTED }}>{item}</a>
+              <BtnGhost key={item} onClick={() => {}}>{item}</BtnGhost>
             ))}
           </nav>
-          <div className="flex items-center gap-3">
-            <Button variant="ghost" onClick={() => router.push("/auth/login")} className="text-sm font-medium" style={{ color: TEXTO }}>
-              Iniciar sesión
-            </Button>
-            <Button onClick={() => router.push("/auth/register")} className="text-sm font-semibold px-5" style={{ backgroundColor: VERDE, color: "#0a1628" }}>
-              Registrarse
-            </Button>
+          <div className="flex items-center gap-2">
+            <BtnGhost onClick={() => router.push("/auth/login")}>Iniciar sesión</BtnGhost>
+            <BtnPrimary onClick={() => router.push("/auth/register")}>Registrarse</BtnPrimary>
           </div>
         </div>
       </header>
 
       {/* ── HERO ── */}
       <section className="relative pt-32 pb-24 px-4 sm:px-6 lg:px-8 overflow-hidden">
-        {/* Fondo decorativo */}
         <div className="absolute inset-0 pointer-events-none">
           <div className="absolute top-0 left-0 w-full h-full" style={{ background: "radial-gradient(ellipse 60% 50% at 20% 50%, rgba(19,236,128,0.08) 0%, transparent 70%)" }} />
           <div className="absolute top-0 right-0 w-full h-full" style={{ background: "radial-gradient(ellipse 50% 60% at 80% 30%, rgba(19,236,128,0.06) 0%, transparent 70%)" }} />
-          {/* Grid pattern */}
           <div className="absolute inset-0 opacity-5" style={{ backgroundImage: "linear-gradient(rgba(19,236,128,0.5) 1px, transparent 1px), linear-gradient(90deg, rgba(19,236,128,0.5) 1px, transparent 1px)", backgroundSize: "60px 60px" }} />
         </div>
 
         <div className="max-w-7xl mx-auto relative">
           <div className="grid lg:grid-cols-2 gap-12 items-center">
-            {/* Texto */}
             <div>
               <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold mb-6" style={{ backgroundColor: "rgba(19,236,128,0.12)", color: VERDE, border: "1px solid rgba(19,236,128,0.25)" }}>
                 <span className="w-1.5 h-1.5 rounded-full animate-pulse" style={{ backgroundColor: VERDE }} />
@@ -164,25 +286,13 @@ export default function Page() {
                 Conecta con deportistas amateurs en Zaragoza. Descubre eventos, encuentra instalaciones y comparte tu pasión por el deporte.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
-                <Button
-                  size="lg"
-                  onClick={() => router.push("/auth/register")}
-                  className="font-bold text-base px-8 py-6 h-auto rounded-xl"
-                  style={{ backgroundColor: VERDE, color: "#0a1628" }}
-                >
-                  Empieza gratis
-                </Button>
-                <Button
-                  size="lg"
-                  variant="outline"
-                  onClick={() => router.push("/auth/login")}
-                  className="font-semibold text-base px-8 py-6 h-auto rounded-xl"
-                  style={{ borderColor: "rgba(148,163,184,0.3)", color: TEXTO, backgroundColor: "transparent" }}
-                >
+                <BtnPrimary size="lg" onClick={() => router.push("/auth/register")}>
+                  Empieza gratis →
+                </BtnPrimary>
+                <BtnOutline size="lg" onClick={() => router.push("/auth/login")}>
                   Iniciar sesión
-                </Button>
+                </BtnOutline>
               </div>
-              {/* Stats */}
               <div className="flex items-center gap-8">
                 {[
                   { val: "500+", label: "Deportistas" },
@@ -197,7 +307,6 @@ export default function Page() {
               </div>
             </div>
 
-            {/* Imagen / mockup */}
             <div className="relative hidden lg:block">
               <div className="relative rounded-2xl overflow-hidden" style={{ border: "1px solid rgba(19,236,128,0.2)", boxShadow: "0 0 80px rgba(19,236,128,0.1)" }}>
                 <img
@@ -208,7 +317,6 @@ export default function Page() {
                 />
                 <div className="absolute inset-0" style={{ background: "linear-gradient(135deg, rgba(19,236,128,0.15) 0%, transparent 60%)" }} />
               </div>
-              {/* Card flotante */}
               <div className="absolute -bottom-6 -left-6 rounded-xl p-4 flex items-center gap-3" style={{ backgroundColor: FONDO2, border: "1px solid rgba(19,236,128,0.2)", boxShadow: "0 8px 32px rgba(0,0,0,0.4)" }}>
                 <div className="w-10 h-10 rounded-full flex items-center justify-center" style={{ backgroundColor: "rgba(19,236,128,0.15)" }}>
                   <Star className="w-5 h-5" style={{ color: VERDE }} />
@@ -234,11 +342,10 @@ export default function Page() {
             </p>
           </div>
           <div className="grid md:grid-cols-3 gap-8 relative">
-            {/* Línea conectora */}
             <div className="hidden md:block absolute top-10 left-1/4 right-1/4 h-px" style={{ backgroundColor: "rgba(19,236,128,0.2)" }} />
             {pasos.map((paso) => (
               <div key={paso.num} className="relative text-center">
-                <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl text-3xl font-black mb-6 relative" style={{ backgroundColor: "rgba(19,236,128,0.1)", color: VERDE, border: "1px solid rgba(19,236,128,0.25)" }}>
+                <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl text-3xl font-black mb-6" style={{ backgroundColor: "rgba(19,236,128,0.1)", color: VERDE, border: "1px solid rgba(19,236,128,0.25)" }}>
                   {paso.num}
                 </div>
                 <h3 className="text-xl font-bold mb-3" style={{ color: TEXTO }}>{paso.titulo}</h3>
@@ -265,20 +372,9 @@ export default function Page() {
               CELIX combina tecnología moderna con datos abiertos del Ayuntamiento de Zaragoza para darte la mejor experiencia deportiva social de la ciudad.
             </p>
           </div>
-
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {features.map((f, i) => (
-              <div
-                key={i}
-                className="rounded-2xl p-6 group transition-all duration-300 hover:-translate-y-1"
-                style={{ backgroundColor: FONDO3, border: "1px solid rgba(148,163,184,0.1)" }}
-              >
-                <div className="w-12 h-12 rounded-xl flex items-center justify-center mb-5 transition-colors" style={{ backgroundColor: "rgba(19,236,128,0.1)" }}>
-                  <f.icon className="w-6 h-6" style={{ color: VERDE }} />
-                </div>
-                <h3 className="font-bold text-lg mb-2" style={{ color: TEXTO }}>{f.titulo}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: TEXTO_MUTED }}>{f.desc}</p>
-              </div>
+              <FeatureCard key={i} f={f} />
             ))}
           </div>
         </div>
@@ -307,7 +403,6 @@ export default function Page() {
                 </div>
               </div>
             </div>
-            {/* Phone mockup */}
             <div className="flex justify-center lg:justify-end">
               <div className="relative">
                 <div className="w-56 h-96 rounded-3xl flex items-center justify-center relative overflow-hidden" style={{ backgroundColor: FONDO3, border: "2px solid rgba(19,236,128,0.3)", boxShadow: "0 0 60px rgba(19,236,128,0.15)" }}>
@@ -321,7 +416,6 @@ export default function Page() {
                     Abrir app →
                   </div>
                 </div>
-                {/* Glow */}
                 <div className="absolute -inset-4 rounded-3xl blur-2xl -z-10 opacity-20" style={{ backgroundColor: VERDE }} />
               </div>
             </div>
@@ -354,14 +448,9 @@ export default function Page() {
           <p className="text-xl mb-10 opacity-80" style={{ color: "#0a1628" }}>
             Únete a cientos de deportistas en Zaragoza y descubre nuevas formas de mantenerte activo
           </p>
-          <Button
-            size="lg"
-            onClick={() => router.push("/auth/register")}
-            className="font-bold text-base px-10 py-6 h-auto rounded-xl"
-            style={{ backgroundColor: "#0a1628", color: VERDE }}
-          >
+          <BtnDark onClick={() => router.push("/auth/register")}>
             Crear cuenta gratuita
-          </Button>
+          </BtnDark>
         </div>
       </section>
 
@@ -382,9 +471,7 @@ export default function Page() {
                 <p className="font-bold text-sm mb-4" style={{ color: TEXTO }}>{titulo}</p>
                 <ul className="space-y-2">
                   {links.map((link) => (
-                    <li key={link}>
-                      <a href="#" className="text-sm transition-colors hover:text-white" style={{ color: TEXTO_MUTED }}>{link}</a>
-                    </li>
+                    <FooterLink key={link} link={link} />
                   ))}
                 </ul>
               </div>

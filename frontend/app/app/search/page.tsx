@@ -56,7 +56,7 @@ export default function Page() {
   const goProfile = (id: string | number) => router.push(`/app/profile/${id}`);
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       {/* Header */}
       <div className="mb-6">
         <h1 className="text-3xl font-black mb-1" style={{ color: "#f1f5f9" }}>

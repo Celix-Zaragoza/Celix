@@ -1,4 +1,5 @@
-import { User } from "../models/index.js";
+import { User, Post } from "../models/index.js";
+import mongoose from "mongoose";
 
 /** Formato público de usuario (sin datos sensibles) */
 function userPublic(user, currentUserId) {
@@ -175,4 +176,78 @@ export const searchUsers = async (req, res, next) => {
   } catch (err) {
     next(err);
   }
+};
+
+// ── GET /users/:id/stats ─────────────────────────────────────────────────────
+
+export const getUserStats = async (req, res, next) => {
+  try {
+    const userId = new mongoose.Types.ObjectId(req.user._id);
+
+    const sieteDiasAtras = new Date();
+    sieteDiasAtras.setDate(sieteDiasAtras.getDate() - 7);
+    sieteDiasAtras.setHours(0, 0, 0, 0);
+
+    const DIAS = ["Dom", "Lun", "Mar", "Mié", "Jue", "Vie", "Sáb"];
+
+    const [totalPosts, likesData, actividadRaw, deportesRaw] = await Promise.all([
+      Post.countDocuments({ autor: userId, eliminado: false }),
+
+      Post.aggregate([
+        { $match: { autor: userId, eliminado: false } },
+        { $group: { _id: null, totalLikes: { $sum: { $size: "$likes" } } } },
+      ]),
+
+      Post.aggregate([
+        {
+          $match: {
+            autor: userId,
+            eliminado: false,
+            createdAt: { $gte: sieteDiasAtras },
+          },
+        },
+        {
+          $group: {
+            _id: {
+              $dateToString: { format: "%Y-%m-%d", date: "$createdAt" },
+            },
+            total: { $sum: 1 },
+          },
+        },
+      ]),
+
+      Post.aggregate([
+        { $match: { autor: userId, eliminado: false } },
+        { $group: { _id: "$deporte", total: { $sum: 1 } } },
+        { $sort: { total: -1 } },
+      ]),
+    ]);
+
+    // Últimos 7 días en orden cronológico comparando por fecha string
+    const actividadSemanal = Array.from({ length: 7 }, (_, i) => {
+      const date = new Date();
+      date.setDate(date.getDate() - (6 - i));
+      const dateStr = date.toISOString().split("T")[0]; // "2025-04-20"
+      const found = actividadRaw.find((d) => d._id === dateStr);
+      return {
+        dia: DIAS[date.getDay()],
+        actividades: found?.total ?? 0,
+      };
+    });
+
+    const distribucionDeportes = deportesRaw.map((d) => ({
+      name: d._id || "Sin deporte",
+      value: d.total,
+    }));
+
+    return res.json({
+      ok: true,
+      stats: {
+        totalPosts,
+        totalLikes: likesData[0]?.totalLikes ?? 0,
+        actividadSemanal,
+        distribucionDeportes,
+      },
+    });
+  } catch (err) { next(err); }
 };

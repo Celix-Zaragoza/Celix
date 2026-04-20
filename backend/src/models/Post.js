@@ -11,13 +11,6 @@ const postSchema = new mongoose.Schema(
     likes: [{ type: mongoose.Schema.Types.ObjectId, ref: "User" }],
     oculto: { type: Boolean, default: false },
     eliminado: { type: Boolean, default: false },
-    // Campo para el Motor de Recomendación (IA)
-    ia_tags: {
-      deporte_principal: { type: String, default: null},
-      nivel_recomendado: { type: Number, min: 1, max: 5, default: null},
-      keyword: [{ type: String}],
-      analizado: { type: Boolean, default: false}
-    }
   },
   {
     timestamps: true,

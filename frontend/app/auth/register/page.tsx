@@ -2,20 +2,21 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Eye, EyeOff, User, Mail, Lock, RefreshCw } from "lucide-react";
+import { Eye, EyeOff, User, Mail, Lock, RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
-// ── InputField fuera de Page para evitar remount en cada render ───────────────
+// ── InputField con soporte para estados de error ─────────────────────────────
 function InputField({
-  id, name, type, placeholder, value, onChange, icon: Icon, toggle, showToggle, onToggle,
+  id, name, type, placeholder, value, onChange, icon: Icon, toggle, showToggle, onToggle, hasError
 }: {
   id: string; name: string; type: string; placeholder: string; value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   icon: React.ElementType; toggle?: boolean; showToggle?: boolean; onToggle?: () => void;
+  hasError?: boolean; // Nueva prop
 }) {
   return (
     <div className="relative">
-      <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#4ade80" }} />
+      <Icon className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: hasError ? "#ef4444" : "#4ade80" }} />
       <input
         id={id}
         name={name}
@@ -27,11 +28,11 @@ function InputField({
         className="w-full h-12 pl-10 pr-10 rounded-lg text-sm outline-none transition-all"
         style={{
           backgroundColor: "rgba(255,255,255,0.07)",
-          border: "1px solid rgba(255,255,255,0.1)",
+          border: `1px solid ${hasError ? "#ef4444" : "rgba(255,255,255,0.1)"}`,
           color: "#f1f5f9",
         }}
-        onFocus={(e) => (e.target.style.borderColor = "#13ec80")}
-        onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
+        onFocus={(e) => (e.target.style.borderColor = hasError ? "#ef4444" : "#13ec80")}
+        onBlur={(e) => (e.target.style.borderColor = hasError ? "#ef4444" : "rgba(255,255,255,0.1)")}
       />
       {toggle && onToggle && (
         <button
@@ -47,7 +48,6 @@ function InputField({
   );
 }
 
-// ── Page ──────────────────────────────────────────────────────────────────────
 export default function Page() {
   const [formData, setFormData] = useState({
     nombre: "",
@@ -59,26 +59,23 @@ export default function Page() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null); // Estado para capturar errores
 
   const router = useRouter();
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
+    if (error) setError(null); // Limpiamos el error al escribir
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null);
 
-    if (!formData.nombre || !formData.email || !formData.password || !formData.confirmPassword) {
-      toast.error("Por favor, completa todos los campos");
-      return;
-    }
+    // Validaciones básicas de cliente antes de ir al servidor
     if (formData.password !== formData.confirmPassword) {
+      setError("Las contraseñas no coinciden");
       toast.error("Las contraseñas no coinciden");
-      return;
-    }
-    if (formData.password.length < 6) {
-      toast.error("La contraseña debe tener al menos 6 caracteres");
       return;
     }
 
@@ -96,22 +93,27 @@ export default function Page() {
       });
 
       const data = await response.json();
-      if (response.status === 201) {
+
+      if (response.ok && data.ok) {
         localStorage.setItem("token", data.token);
         toast.success("¡Cuenta creada exitosamente!");
+        
         const qs = new URLSearchParams({
           nombre: formData.nombre,
           email: formData.email,
-          alias: formData.alias || formData.nombre.toLowerCase().replace(/\s+/g, "_"),
+          alias: data.user?.alias || formData.alias,
         }).toString();
+        
         router.push(`/auth/create-profile-1?${qs}`);
-      } else if (response.status === 409) {
-        toast.error("El email o alias ya está en uso");
       } else {
-        toast.error("Error al crear la cuenta");
+        // Aquí capturamos el mensaje que arreglamos en el backend (Zod o errores de DB)
+        const errorMsg = data.message || "Error al crear la cuenta";
+        setError(errorMsg);
+        toast.error(errorMsg);
       }
-    } catch {
-      toast.error("Error de conexión con el servidor");
+    } catch (err) {
+      setError("No se pudo conectar con el servidor");
+      toast.error("Error de conexión");
     } finally {
       setLoading(false);
     }
@@ -119,18 +121,9 @@ export default function Page() {
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: "#0d1f16" }}>
-
-      {/* ── Panel izquierdo (solo desktop) ── */}
-      <div
-        className="hidden lg:flex flex-col justify-between w-[45%] relative overflow-hidden p-10"
-        style={{ backgroundColor: "#0f2318" }}
-      >
-        <div
-          className="absolute inset-0 opacity-20"
-          style={{ background: "radial-gradient(ellipse at 60% 60%, #13ec80 0%, transparent 70%)" }}
-        />
-
-        {/* Logo */}
+      {/* ── Panel izquierdo (desktop) - Sin cambios visuales significativos ── */}
+      <div className="hidden lg:flex flex-col justify-between w-[45%] relative overflow-hidden p-10" style={{ backgroundColor: "#0f2318" }}>
+        <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(ellipse at 60% 60%, #13ec80 0%, transparent 70%)" }} />
         <div className="relative flex items-center gap-2 z-10">
           <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#13ec80" }}>
             <span className="text-lg font-black" style={{ color: "#0a1628" }}>⚡</span>
@@ -138,136 +131,65 @@ export default function Page() {
           <span className="text-xl font-black tracking-widest" style={{ color: "#13ec80" }}>CELIX</span>
         </div>
 
-        {/* Texto central */}
         <div className="relative z-10">
-          <p className="text-sm font-semibold mb-3 uppercase tracking-widest" style={{ color: "#13ec80" }}>
-            Red social deportiva
-          </p>
           <h1 className="text-5xl font-black leading-tight mb-6" style={{ color: "#f1f5f9" }}>
-            SUPERA TUS{" "}
-            <span style={{ color: "#13ec80" }}>LÍMITES</span>
+            ÚNETE A LA <span style={{ color: "#13ec80" }}>ÉLITE</span>
           </h1>
           <p className="text-base leading-relaxed mb-8" style={{ color: "rgba(241,245,249,0.65)" }}>
-            Únete a la plataforma líder en optimización deportiva. Registra tus progresos y conecta con la comunidad en Zaragoza.
+            Zaragoza ya tiene su red deportiva. Registra tus marcas y compite con los mejores.
           </p>
-          <div className="flex items-center gap-3">
-            <div className="flex -space-x-2">
-              {["#13ec80", "#10d671", "#0ec060"].map((c, i) => (
-                <div
-                  key={i}
-                  className="w-8 h-8 rounded-full border-2 flex items-center justify-center text-xs font-bold"
-                  style={{ backgroundColor: c, borderColor: "#0f2318", color: "#0a1628" }}
-                >
-                  {["C", "M", "J"][i]}
-                </div>
-              ))}
-            </div>
-            <p className="text-sm" style={{ color: "rgba(241,245,249,0.55)" }}>
-              +2.000 atletas en Zaragoza ya entrenan con nosotros
-            </p>
-          </div>
         </div>
 
-        {/* Balón */}
         <div className="relative z-10 flex justify-center">
-          <div
-            className="w-56 h-56 rounded-full flex items-center justify-center"
-            style={{
-              background: "radial-gradient(circle at 35% 35%, #b5651d, #3d1a00)",
-              boxShadow: "0 0 60px rgba(19,236,128,0.15), inset 0 0 40px rgba(0,0,0,0.4)",
-            }}
-          >
+          <div className="w-56 h-56 rounded-full flex items-center justify-center" style={{ background: "radial-gradient(circle at 35% 35%, #b5651d, #3d1a00)", boxShadow: "0 0 60px rgba(19,236,128,0.15), inset 0 0 40px rgba(0,0,0,0.4)" }}>
             <span style={{ fontSize: "7rem" }}>🏀</span>
           </div>
         </div>
-
-        <button
-          onClick={() => router.push("/")}
-          className="relative z-10 text-sm self-start hover:underline"
-          style={{ color: "rgba(148,163,184,0.6)" }}
-        >
-          ← Volver al inicio
-        </button>
+        <button onClick={() => router.push("/")} className="relative z-10 text-sm self-start hover:underline" style={{ color: "rgba(148,163,184,0.6)" }}>← Volver</button>
       </div>
 
       {/* ── Panel derecho — Formulario ── */}
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md">
-
-          {/* Logo móvil */}
-          <div className="flex items-center gap-2 mb-8 lg:hidden">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#13ec80" }}>
-              <span className="text-lg font-black" style={{ color: "#0a1628" }}>⚡</span>
-            </div>
-            <span className="text-xl font-black tracking-widest" style={{ color: "#13ec80" }}>CELIX</span>
-          </div>
-
-          {/* Header */}
           <div className="mb-8">
             <h2 className="text-3xl font-black mb-2" style={{ color: "#f1f5f9" }}>Crear cuenta</h2>
-            <p className="text-sm" style={{ color: "#94a3b8" }}>Comienza tu viaje hacia el alto rendimiento hoy.</p>
+            <p className="text-sm" style={{ color: "#94a3b8" }}>Comienza tu viaje hoy mismo.</p>
           </div>
 
-          {/* Formulario inline — sin componente Form separado */}
           <form onSubmit={handleSubmit} className="space-y-4">
-
             <div>
-              <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>
-                Nombre completo
-              </label>
-              <InputField
-                id="nombre" name="nombre" type="text"
-                placeholder="Tu nombre" value={formData.nombre}
-                onChange={handleChange} icon={User}
-              />
+              <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>Nombre completo</label>
+              <InputField id="nombre" name="nombre" type="text" placeholder="Tu nombre" value={formData.nombre} onChange={handleChange} icon={User} hasError={!!error} />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>
-                Alias
-              </label>
-              <InputField
-                id="alias" name="alias" type="text"
-                placeholder="ej. marcos_fit" value={formData.alias}
-                onChange={handleChange} icon={User}
-              />
+              <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>Alias</label>
+              <InputField id="alias" name="alias" type="text" placeholder="ej. marcos_fit" value={formData.alias} onChange={handleChange} icon={User} hasError={!!error} />
             </div>
 
             <div>
-              <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>
-                Correo electrónico
-              </label>
-              <InputField
-                id="email" name="email" type="email"
-                placeholder="correo@ejemplo.com" value={formData.email}
-                onChange={handleChange} icon={Mail}
-              />
+              <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>Correo electrónico</label>
+              <InputField id="email" name="email" type="email" placeholder="correo@ejemplo.com" value={formData.email} onChange={handleChange} icon={Mail} hasError={!!error} />
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>
-                  Contraseña
-                </label>
-                <InputField
-                  id="password" name="password" type="password"
-                  placeholder="••••••••" value={formData.password}
-                  onChange={handleChange} icon={Lock}
-                  toggle showToggle={showPassword} onToggle={() => setShowPassword((v) => !v)}
-                />
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>Contraseña</label>
+                <InputField id="password" name="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleChange} icon={Lock} toggle showToggle={showPassword} onToggle={() => setShowPassword((v) => !v)} hasError={!!error} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>
-                  Confirmar
-                </label>
-                <InputField
-                  id="confirmPassword" name="confirmPassword" type="password"
-                  placeholder="••••••••" value={formData.confirmPassword}
-                  onChange={handleChange} icon={RefreshCw}
-                  toggle showToggle={showConfirmPassword} onToggle={() => setShowConfirmPassword((v) => !v)}
-                />
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>Confirmar</label>
+                <InputField id="confirmPassword" name="confirmPassword" type="password" placeholder="••••••••" value={formData.confirmPassword} onChange={handleChange} icon={RefreshCw} toggle showToggle={showConfirmPassword} onToggle={() => setShowConfirmPassword((v) => !v)} hasError={!!error} />
               </div>
             </div>
+
+            {/* ── Alerta de Error Dinámica ── */}
+            {error && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/50 text-red-400 text-xs animate-in fade-in slide-in-from-top-1">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <p>{error}</p>
+              </div>
+            )}
 
             <button
               type="submit"
@@ -284,35 +206,9 @@ export default function Page() {
 
             <p className="text-center text-sm pt-1" style={{ color: "#94a3b8" }}>
               ¿Ya tienes una cuenta?{" "}
-              <button
-                type="button"
-                onClick={() => router.push("/auth/login")}
-                className="font-semibold hover:underline"
-                style={{ color: "#13ec80" }}
-              >
-                Iniciar sesión
-              </button>
-            </p>
-
-            <p className="text-center text-xs leading-relaxed pt-2" style={{ color: "rgba(148,163,184,0.6)" }}>
-              Al registrarte, confirmas que has leído y aceptas nuestra{" "}
-              <a href="#" className="underline" style={{ color: "rgba(148,163,184,0.8)" }}>Política de Privacidad</a>
-              {" "}y{" "}
-              <a href="#" className="underline" style={{ color: "rgba(148,163,184,0.8)" }}>Términos de Servicio</a>.
-              Datos procesados conforme a la normativa vigente en el municipio de Zaragoza, España.
+              <button type="button" onClick={() => router.push("/auth/login")} className="font-semibold hover:underline" style={{ color: "#13ec80" }}>Iniciar sesión</button>
             </p>
           </form>
-
-          {/* Volver móvil */}
-          <div className="mt-6 text-center lg:hidden">
-            <button
-              onClick={() => router.push("/")}
-              className="text-sm"
-              style={{ color: "rgba(148,163,184,0.6)" }}
-            >
-              ← Volver al inicio
-            </button>
-          </div>
         </div>
       </div>
     </div>

@@ -86,7 +86,7 @@ export default function Page() {
   const selectTriggerStyle = "h-12 rounded-xl text-sm bg-transparent border-0 text-[#f1f5f9] focus:ring-0";
 
   return (
-    <div className="max-w-2xl mx-auto">
+    <div className="max-w-4xl mx-auto">
       <div
         className="rounded-2xl p-6 md:p-8"
         style={{
