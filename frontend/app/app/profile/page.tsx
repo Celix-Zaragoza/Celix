@@ -31,7 +31,7 @@ export default function Page() {
     if (!user?.id) return;
     const fetchStats = async () => {
       try {
-        const res = await fetch(`${API}/users/me/stats`, {
+        const res = await fetch(`${API}/api/v1/users/me/stats`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         if (res.ok) {
@@ -48,7 +48,7 @@ export default function Page() {
   useEffect(() => {
     const fetchMe = async () => {
       try {
-        const res = await fetch(`${API}/users/me`, {
+        const res = await fetch(`${API}/api/v1/users/me`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         if (res.ok) {
@@ -67,7 +67,7 @@ export default function Page() {
     const fetchPosts = async () => {
       setLoadingPosts(true);
       try {
-        const res = await fetch(`${API}/posts/user/${user.id}`, {
+        const res = await fetch(`${API}/api/v1/posts/user/${user.id}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         if (res.ok) {

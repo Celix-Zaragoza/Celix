@@ -43,7 +43,7 @@ export default function Page() {
 
   const fetchUsuarios = async (query: string) => {
     try {
-      const res = await fetch(`${API}/users/search?q=${query}`, {
+      const res = await fetch(`${API}/api/v1/users/search?q=${query}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       if (!res.ok) throw new Error("Error al buscar usuarios");

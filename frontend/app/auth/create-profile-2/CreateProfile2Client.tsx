@@ -72,7 +72,7 @@ export default function CreateProfile2Client() {
         })),
       };
 
-      const res = await fetch(`${API}/users/me`, {
+      const res = await fetch(`${API}/api/v1/users/me`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

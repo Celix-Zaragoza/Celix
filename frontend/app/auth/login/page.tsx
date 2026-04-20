@@ -30,7 +30,7 @@ export default function Page() {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API}/auth/login`, {
+      const response = await fetch(`${API}/api/v1/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }), // <--- 1. Verifica que estos nombres coincidan con el backend

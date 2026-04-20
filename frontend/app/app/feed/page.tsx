@@ -36,7 +36,7 @@ export default function Page() {
     const fetchParaTi = async () => {
       setLoadingParaTi(true);
       try {
-        const res = await fetch(`${API}/posts/para-ti?limit=15`, { headers: authHeaders() });
+        const res = await fetch(`${API}/api/v1/posts/para-ti?limit=15`, { headers: authHeaders() });
         const data = await res.json();
 
         if (res.ok) {
@@ -62,7 +62,7 @@ export default function Page() {
     const fetchFollowing = async () => {
       setLoadingFollowing(true);
       try {
-        const res = await fetch(`${API}/posts/following?limit=15`, { headers: authHeaders() });
+        const res = await fetch(`${API}/api/v1/posts/following?limit=15`, { headers: authHeaders() });
         if (res.ok) {
           const data = await res.json();
           setFollowingPosts(data.posts ?? []);

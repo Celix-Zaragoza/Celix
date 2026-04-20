@@ -47,7 +47,7 @@ export const PublicationCard = ({ publicacion }: PublicationCardProps) => {
     setLikes((prev) => (wasLiked ? prev - 1 : prev + 1));
 
     try {
-      const res = await fetch(`${API}/posts/${postId}/like`, {
+      const res = await fetch(`${API}/api/v1/posts/${postId}/like`, {
         method: wasLiked ? "DELETE" : "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
