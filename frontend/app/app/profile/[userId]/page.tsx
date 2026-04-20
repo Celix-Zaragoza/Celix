@@ -39,7 +39,7 @@ export default function Page() {
     const fetchUsuario = async () => {
       setLoading(true);
       try {
-        const res = await fetch(`${API}/users/${userId}`, { headers: authHeaders() });
+        const res = await fetch(`${API}/api/v1/users/${userId}`, { headers: authHeaders() });
         if (!res.ok) {
           toast.error("Usuario no encontrado");
           router.push("/app/feed");
@@ -63,7 +63,7 @@ export default function Page() {
     const fetchPosts = async () => {
       setLoadingPosts(true);
       try {
-        const res = await fetch(`${API}/posts/user/${userId}`, {
+        const res = await fetch(`${API}/api/v1/posts/user/${userId}`, {
           headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
         });
         if (res.ok) {
@@ -84,7 +84,7 @@ export default function Page() {
     setLoadingFollow(true);
     try {
       const method = siguiendo ? "DELETE" : "POST";
-      const res = await fetch(`${API}/users/${userId}/follow`, {
+      const res = await fetch(`${API}/api/v1/users/${userId}/follow`, {
         method,
         headers: authHeaders(),
       });

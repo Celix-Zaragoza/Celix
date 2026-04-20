@@ -83,7 +83,7 @@ export default function Page() {
 
     setLoading(true);
     try {
-      const response = await fetch(`${API}/auth/register`, {
+      const response = await fetch(`${API}/api/v1/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

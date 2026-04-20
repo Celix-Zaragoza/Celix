@@ -60,7 +60,7 @@ export default function Page() {
       let imageUrl: string | null = null;
       if (file) imageUrl = await uploadImage(file);
 
-      const res = await fetch(`${API}/posts`, {
+      const res = await fetch(`${API}/api/v1/posts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

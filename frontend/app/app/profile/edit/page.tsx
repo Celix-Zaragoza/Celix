@@ -8,6 +8,8 @@ import { deportesDisponibles, zonasZaragoza } from "../../../data/mockData";
 import { toast } from "sonner";
 import { Check, ChevronDown, ChevronUp, X, Camera } from "lucide-react";
 
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+
 const NIVELES = [
   { value: 1, label: "Principiante" },
   { value: 2, label: "Básico" },
@@ -131,7 +133,7 @@ export default function Page() {
         avatarUrl = await uploadImage(avatarFile);
       }
 
-      const res = await fetch("http://localhost:3001/api/v1/users/me", {
+      const res = await fetch(`${API}/api/v1/users/me`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",
