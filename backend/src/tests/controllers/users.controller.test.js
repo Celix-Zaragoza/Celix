@@ -12,6 +12,10 @@ jest.unstable_mockModule("../../models/index.js", () => ({
     findByIdAndUpdate: userFindByIdAndUpdateMock,
     find: userFindMock,
   },
+  Post: {
+    countDocuments: jest.fn(),
+    aggregate: jest.fn(),
+  },
 }));
 
 const {

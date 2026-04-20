@@ -91,10 +91,6 @@ export const createPost = async (req, res, next) => {
       imagen: imagen || null,
     });
 
-    const infoDeporte = req.user.deportesNivel?.find(d => 
-      d.deporte.toLowerCase() === deporte.toLowerCase()
-    );
-    
     await post.populate("autor", "alias nombre avatar zona");
 
     res.status(201).json({ ok: true, post: postPublic(post, req.user._id) });
@@ -108,7 +104,6 @@ const cacheFeedIA = new Map();
 
 export const getParaTiFeed = async (req, res, next) => {
   try {
-    console.log(`\[IA Feed] Generando feed para usuario: ${req.user.alias}`);
     
     const userId = req.user._id.toString();
     const ahora = Date.now();

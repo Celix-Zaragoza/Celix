@@ -175,7 +175,7 @@ export default function Page() {
           >
             <Search className="w-12 h-12 mx-auto mb-3" style={{ color: "rgba(148,163,184,0.3)" }} />
             <p className="text-sm" style={{ color: "#94a3b8" }}>
-              No se encontraron usuarios para <span style={{ color: "#f1f5f9" }}>"{searchQuery}"</span>
+              No se encontraron usuarios para <span style={{ color: "#f1f5f9" }}>&quot;{searchQuery}&quot;</span>
             </p>
           </div>
         ) : (
