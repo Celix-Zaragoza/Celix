@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, User, Mail, Lock, RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+
 // ── InputField con soporte para estados de error ─────────────────────────────
 function InputField({
   id, name, type, placeholder, value, onChange, icon: Icon, toggle, showToggle, onToggle, hasError
@@ -81,7 +83,7 @@ export default function Page() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3001/api/v1/auth/register", {
+      const response = await fetch(`${API}/auth/register`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({

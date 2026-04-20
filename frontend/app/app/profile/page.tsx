@@ -10,7 +10,7 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 
-const API = "http://localhost:3001/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 
 const COLORS = ["#13ec80", "#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981"];
 

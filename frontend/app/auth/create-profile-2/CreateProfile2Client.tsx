@@ -6,6 +6,8 @@ import { deportesDisponibles } from "../../data/mockData";
 import { toast } from "sonner";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+
 const NIVELES = [
   { value: 1, label: "Principiante" },
   { value: 2, label: "Básico" },
@@ -70,7 +72,7 @@ export default function CreateProfile2Client() {
         })),
       };
 
-      const res = await fetch("http://localhost:3001/api/v1/users/me", {
+      const res = await fetch(`${API}/users/me`, {
         method: "PATCH",
         headers: {
           "Content-Type": "application/json",

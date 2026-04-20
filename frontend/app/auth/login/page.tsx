@@ -6,6 +6,8 @@ import { useAuth } from "../../context/AuthContext";
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react"; // Añadido AlertCircle
 import { toast } from "sonner";
 
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+
 export default function Page() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -28,7 +30,7 @@ export default function Page() {
 
     setLoading(true);
     try {
-      const response = await fetch("http://localhost:3001/api/v1/auth/login", {
+      const response = await fetch(`${API}/auth/login`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email, password }), // <--- 1. Verifica que estos nombres coincidan con el backend

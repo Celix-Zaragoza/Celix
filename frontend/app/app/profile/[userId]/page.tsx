@@ -7,7 +7,7 @@ import { PublicationCard } from "../../../components/PublicationCard";
 import { MapPin, Calendar, MessageCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-const API = "http://localhost:3001/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
 
 function authHeaders() {
   return {

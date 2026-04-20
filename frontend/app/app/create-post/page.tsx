@@ -8,6 +8,8 @@ import { toast } from "sonner";
 import { ImageIcon, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+
 export default function Page() {
   const router = useRouter();
   const { user } = useAuth();
@@ -58,7 +60,7 @@ export default function Page() {
       let imageUrl: string | null = null;
       if (file) imageUrl = await uploadImage(file);
 
-      const res = await fetch("http://localhost:3001/api/v1/posts", {
+      const res = await fetch(`${API}/posts`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
