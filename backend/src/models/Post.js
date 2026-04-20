@@ -27,5 +27,7 @@ postSchema.virtual("numLikes").get(function () { return this.likes?.length ?? 0;
 postSchema.index({ autor: 1, createdAt: -1 });
 postSchema.index({ deporte: 1, createdAt: -1 });
 postSchema.index({ oculto: 1, eliminado: 1, createdAt: -1 });
+// Indice para optimizar el feed "Para ti"
+postSchema.index({"ia_tags.analizado": 1, "ia_tags.nivel_recomendado": 1});
 
 export const Post = mongoose.model("Post", postSchema);

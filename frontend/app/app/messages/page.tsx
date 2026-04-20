@@ -1,93 +1,241 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useRouter } from "next/navigation";
-import { mockConversaciones, mockMensajes } from "../../data/mockData";
-import { Input } from "../../components/ui/input";
-import { Button } from "../../components/ui/button";
-import { Search, Send, ArrowLeft } from "lucide-react";
+import { Search, Plus, X, MessageCircle, Loader2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { es } from "date-fns/locale";
 import { useAuth } from "../../context/AuthContext";
+
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
+
+interface Participante {
+  id: string;
+  nombre: string;
+  alias: string;
+  avatar?: string;
+}
+
+interface Conversacion {
+  id: string;
+  participantes: Participante[];
+  ultimoMensaje: string;
+  ultimaFecha: string;
+  noLeidos: number;
+}
+
+interface UsuarioBusqueda {
+  id: string;
+  nombre: string;
+  alias: string;
+  avatar?: string;
+}
+
+function getOtherParticipant(conv: Conversacion, myId: string): Participante {
+  return conv.participantes.find((p) => p.id !== myId) ?? conv.participantes[0];
+}
 
 export default function Page() {
   const router = useRouter();
   const { user } = useAuth();
 
-  const conversationId: string | undefined = undefined;
-
+  const [conversaciones, setConversaciones] = useState<Conversacion[]>([]);
   const [searchQuery, setSearchQuery] = useState("");
-  const [messageText, setMessageText] = useState("");
-  const [conversaciones] = useState(mockConversaciones);
+  const [loading, setLoading] = useState(true);
 
-  const conversacionActual = conversaciones.find((c) => c.id === conversationId);
-  const mensajes = conversationId ? mockMensajes[conversationId] || [] : [];
+  const [showNewChat, setShowNewChat] = useState(false);
+  const [userSearch, setUserSearch] = useState("");
+  const [userResults, setUserResults] = useState<UsuarioBusqueda[]>([]);
+  const [searchingUsers, setSearchingUsers] = useState(false);
+
+  const fetchConversaciones = useCallback(async () => {
+    try {
+      const res = await fetch(`${API}/api/v1/conversations`, {
+        headers: { Authorization: `Bearer ${localStorage.getItem("token")}` },
+      });
+      const data = await res.json();
+      if (data.ok) {
+        const mapped: Conversacion[] = data.conversations.map((c: any) => ({
+          id: c.id,
+          participantes: c.participantes.map((p: any) => ({
+            id: p.id,
+            nombre: p.nombre,
+            alias: p.alias,
+            avatar: p.avatar,
+          })),
+          ultimoMensaje: c.ultimoMensaje ?? "",
+          ultimaFecha: c.ultimaFecha ?? c.updatedAt,
+          noLeidos: c.noLeidos?.[user?.id ?? ""] ?? 0,
+        }));
+        setConversaciones(mapped);
+      }
+    } catch (err) {
+      console.error("Error cargando conversaciones:", err);
+    } finally {
+      setLoading(false);
+    }
+  }, [user?.id]);
+
+  useEffect(() => { fetchConversaciones(); }, [fetchConversaciones]);
+
+  useEffect(() => {
+    if (!userSearch.trim()) { setUserResults([]); return; }
+    const timer = setTimeout(async () => {
+      setSearchingUsers(true);
+      try {
+        const res = await fetch(
+          `${API}/api/v1/users/search?q=${encodeURIComponent(userSearch)}`,
+          { headers: { Authorization: `Bearer ${localStorage.getItem("token")}` } }
+        );
+        const data = await res.json();
+        if (data.ok) setUserResults(data.users ?? []);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setSearchingUsers(false);
+      }
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [userSearch]);
+
+  const handleStartConversation = async (userId: string) => {
+    try {
+      const res = await fetch(`${API}/api/v1/conversations`, {
+        method: "POST",
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("token")}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ participanteId: userId }),
+      });
+      const data = await res.json();
+      if (data.ok) {
+        setShowNewChat(false);
+        setUserSearch("");
+        router.push(`/app/messages/${data.conversation.id}`);
+      }
+    } catch (err) {
+      console.error(err);
+    }
+  };
 
   const filteredConversaciones = searchQuery
-    ? conversaciones.filter(
-        (c) =>
-          c.participantes[0].nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          c.participantes[0].alias.toLowerCase().includes(searchQuery.toLowerCase())
-      )
+    ? conversaciones.filter((c) => {
+        const other = getOtherParticipant(c, user?.id ?? "");
+        return (
+          other.nombre.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          other.alias.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      })
     : conversaciones;
 
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!messageText.trim()) return;
-    setMessageText("");
+  const inputStyle: React.CSSProperties = {
+    backgroundColor: "rgba(255,255,255,0.06)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: "#f1f5f9",
   };
 
   return (
     <div className="max-w-7xl mx-auto h-[calc(100vh-12rem)]">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full flex">
-        {/* Conversations List */}
-        <div className="w-full md:w-96 border-r flex-shrink-0 flex flex-col">
-          <div className="p-4 border-b">
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">Mensajes</h2>
+      <div
+        className="rounded-2xl overflow-hidden h-full flex"
+        style={{ backgroundColor: "rgba(255,255,255,0.03)", border: "1px solid rgba(255,255,255,0.07)" }}
+      >
+        {/* ── Lista de conversaciones ── */}
+        <div
+          className="w-full md:w-96 flex-shrink-0 flex flex-col"
+          style={{ borderRight: "1px solid rgba(255,255,255,0.07)" }}
+        >
+          {/* Header */}
+          <div className="p-4" style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-xl font-black" style={{ color: "#f1f5f9" }}>Mensajes</h2>
+              <button
+                onClick={() => setShowNewChat(true)}
+                className="flex items-center gap-1.5 px-3 h-8 rounded-xl text-xs font-semibold transition-all"
+                style={{
+                  backgroundColor: "rgba(19,236,128,0.12)",
+                  color: "#13ec80",
+                  border: "1px solid rgba(19,236,128,0.25)",
+                }}
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Nuevo
+              </button>
+            </div>
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-              <Input
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#13ec80" }} />
+              <input
                 type="text"
                 placeholder="Buscar conversaciones..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
+                className="w-full h-10 pl-10 pr-4 rounded-xl text-sm outline-none transition-all"
+                style={inputStyle}
+                onFocus={(e) => (e.target.style.borderColor = "#13ec80")}
+                onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
               />
             </div>
           </div>
 
+          {/* Lista */}
           <div className="flex-1 overflow-y-auto">
-            {filteredConversaciones.map((conversacion) => {
-              const participante = conversacion.participantes[0];
-              const timeAgo = formatDistanceToNow(new Date(conversacion.ultimaFecha), {
-                addSuffix: true,
-                locale: es,
-              });
+            {loading && (
+              <div className="flex items-center justify-center py-12">
+                <Loader2 className="w-6 h-6 animate-spin" style={{ color: "#13ec80" }} />
+              </div>
+            )}
+            {!loading && filteredConversaciones.length === 0 && (
+              <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+                <MessageCircle className="w-10 h-10 mb-3" style={{ color: "rgba(148,163,184,0.3)" }} />
+                <p className="text-sm" style={{ color: "#94a3b8" }}>
+                  {searchQuery ? "No se encontraron conversaciones" : "No hay conversaciones todavía"}
+                </p>
+              </div>
+            )}
+            {filteredConversaciones.map((conv) => {
+              const other = getOtherParticipant(conv, user?.id ?? "");
+              const timeAgo = conv.ultimaFecha
+                ? formatDistanceToNow(new Date(conv.ultimaFecha), { addSuffix: true, locale: es })
+                : "";
 
               return (
                 <button
-                  key={conversacion.id}
-                  onClick={() => router.push(`/app/messages/${conversacion.id}`)}
-                  className={`w-full p-4 flex items-start gap-3 hover:bg-gray-50 transition-colors border-b`}
+                  key={conv.id}
+                  onClick={() => router.push(`/app/messages/${conv.id}`)}
+                  className="w-full p-4 flex items-start gap-3 transition-all"
+                  style={{ borderBottom: "1px solid rgba(255,255,255,0.05)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "transparent")}
                 >
-                  <div className="relative">
+                  <div className="relative flex-shrink-0">
                     <img
-                      src={participante.avatar}
-                      alt={participante.nombre}
-                      className="w-14 h-14 rounded-full object-cover"
+                      src={other.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${other.nombre}`}
+                      alt={other.nombre}
+                      className="w-11 h-11 rounded-full object-cover"
+                      style={{ border: "2px solid rgba(19,236,128,0.3)" }}
                     />
-                    {conversacion.noLeidos > 0 && (
-                      <div className="absolute -top-1 -right-1 bg-red-600 text-white text-xs w-5 h-5 rounded-full flex items-center justify-center font-bold">
-                        {conversacion.noLeidos}
+                    {conv.noLeidos > 0 && (
+                      <div
+                        className="absolute -top-1 -right-1 w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold"
+                        style={{ backgroundColor: "#13ec80", color: "#0a1628" }}
+                      >
+                        {conv.noLeidos}
                       </div>
                     )}
                   </div>
                   <div className="flex-1 text-left min-w-0">
-                    <div className="flex items-center justify-between mb-1">
-                      <h3 className="font-bold text-gray-900 truncate">{participante.nombre}</h3>
-                      <span className="text-xs text-gray-500 flex-shrink-0">{timeAgo}</span>
+                    <div className="flex items-center justify-between mb-0.5">
+                      <h3 className="font-semibold text-sm truncate" style={{ color: "#f1f5f9" }}>
+                        {other.nombre}
+                      </h3>
+                      <span className="text-xs flex-shrink-0 ml-2" style={{ color: "rgba(148,163,184,0.5)" }}>
+                        {timeAgo}
+                      </span>
                     </div>
-                    <p className="text-sm text-gray-600 truncate">{conversacion.ultimoMensaje}</p>
+                    <p className="text-xs truncate" style={{ color: "#94a3b8" }}>
+                      {conv.ultimoMensaje || "Sin mensajes aún"}
+                    </p>
                   </div>
                 </button>
               );
@@ -95,68 +243,93 @@ export default function Page() {
           </div>
         </div>
 
-        {/* Right empty state (desktop) */}
-        {!conversacionActual && (
-          <div className="hidden md:flex flex-1 items-center justify-center text-gray-500">
-            <div className="text-center">
-              <p className="text-lg mb-2">Selecciona una conversación</p>
-              <p className="text-sm">Elige un contacto para comenzar a chatear</p>
-            </div>
+        {/* ── Empty state desktop ── */}
+        <div className="hidden md:flex flex-1 items-center justify-center">
+          <div className="text-center">
+            <MessageCircle className="w-14 h-14 mx-auto mb-4" style={{ color: "rgba(148,163,184,0.15)" }} />
+            <p className="font-semibold mb-1" style={{ color: "#f1f5f9" }}>Selecciona una conversación</p>
+            <p className="text-sm" style={{ color: "#94a3b8" }}>o inicia una nueva con el botón Nuevo</p>
           </div>
-        )}
-
-        {/* (No chat area on /app/messages) */}
-        {!!conversacionActual && (
-          <div className="flex-1 flex flex-col">
-            {/* Chat Header */}
-            <div className="p-4 border-b flex items-center gap-3">
-              <Button variant="ghost" size="sm" onClick={() => router.push("/app/messages")} className="md:hidden">
-                <ArrowLeft className="w-5 h-5" />
-              </Button>
-            </div>
-
-            <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {mensajes.map((mensaje) => {
-                const isOwn = mensaje.remitenteId === user?.id || mensaje.remitenteId === "1";
-                const timeAgo = formatDistanceToNow(new Date(mensaje.fecha), {
-                  addSuffix: true,
-                  locale: es,
-                });
-
-                return (
-                  <div key={mensaje.id} className={`flex ${isOwn ? "justify-end" : "justify-start"}`}>
-                    <div className={`max-w-[70%] ${isOwn ? "order-1" : "order-2"}`}>
-                      <div
-                        className={`rounded-2xl px-4 py-2 ${
-                          isOwn ? "bg-blue-600 text-white" : "bg-gray-100 text-gray-900"
-                        }`}
-                      >
-                        <p>{mensaje.contenido}</p>
-                      </div>
-                      <span className="text-xs text-gray-500 mt-1 block">{timeAgo}</span>
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-
-            <form onSubmit={handleSendMessage} className="p-4 border-t">
-              <div className="flex gap-2">
-                <Input
-                  type="text"
-                  placeholder="Escribe un mensaje..."
-                  value={messageText}
-                  onChange={(e) => setMessageText(e.target.value)}
-                  className="flex-1"
-                />
-                <Button type="submit" disabled={!messageText.trim()}>
-                  <Send className="w-5 h-5" />
-                </Button>
-              </div>
-            </form>
-          </div>
-        )}
+        </div>
       </div>
+
+      {/* ── Modal nueva conversación ── */}
+      {showNewChat && (
+        <div
+          className="fixed inset-0 flex items-center justify-center z-50 p-4"
+          style={{ backgroundColor: "rgba(0,0,0,0.7)" }}
+          onClick={() => { setShowNewChat(false); setUserSearch(""); setUserResults([]); }}
+        >
+          <div
+            className="w-full max-w-md rounded-2xl p-6"
+            style={{ backgroundColor: "#0f2318", border: "1px solid rgba(255,255,255,0.1)" }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Header modal */}
+            <div className="flex items-center justify-between mb-5">
+              <h3 className="text-lg font-black" style={{ color: "#f1f5f9" }}>Nueva conversación</h3>
+              <button
+                onClick={() => { setShowNewChat(false); setUserSearch(""); setUserResults([]); }}
+                className="w-8 h-8 rounded-xl flex items-center justify-center transition-all"
+                style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "#94a3b8" }}
+              >
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+
+            {/* Buscador modal */}
+            <div className="relative mb-4">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#13ec80" }} />
+              <input
+                type="text"
+                placeholder="Buscar usuario por nombre o alias..."
+                value={userSearch}
+                onChange={(e) => setUserSearch(e.target.value)}
+                autoFocus
+                className="w-full h-11 pl-10 pr-4 rounded-xl text-sm outline-none transition-all"
+                style={inputStyle}
+                onFocus={(e) => (e.target.style.borderColor = "#13ec80")}
+                onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
+              />
+            </div>
+
+            {/* Resultados modal */}
+            <div className="max-h-64 overflow-y-auto space-y-1">
+              {searchingUsers && (
+                <div className="flex justify-center py-6">
+                  <Loader2 className="w-5 h-5 animate-spin" style={{ color: "#13ec80" }} />
+                </div>
+              )}
+              {!searchingUsers && userSearch && userResults.length === 0 && (
+                <p className="text-center text-sm py-6" style={{ color: "#94a3b8" }}>
+                  No se encontraron usuarios
+                </p>
+              )}
+              {userResults.map((u) => (
+                <button
+                  key={u.id}
+                  onClick={() => handleStartConversation(u.id)}
+                  className="w-full flex items-center gap-3 p-3 rounded-xl transition-all"
+                  style={{ backgroundColor: "rgba(255,255,255,0.04)" }}
+                  onMouseEnter={(e) => (e.currentTarget.style.backgroundColor = "rgba(19,236,128,0.08)")}
+                  onMouseLeave={(e) => (e.currentTarget.style.backgroundColor = "rgba(255,255,255,0.04)")}
+                >
+                  <img
+                    src={u.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${u.nombre}`}
+                    alt={u.nombre}
+                    className="w-10 h-10 rounded-full object-cover flex-shrink-0"
+                    style={{ border: "2px solid rgba(19,236,128,0.3)" }}
+                  />
+                  <div className="text-left">
+                    <p className="font-semibold text-sm" style={{ color: "#f1f5f9" }}>{u.nombre}</p>
+                    <p className="text-xs" style={{ color: "#94a3b8" }}>@{u.alias}</p>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

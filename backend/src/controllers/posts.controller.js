@@ -1,4 +1,5 @@
 import { Post, User } from "../models/index.js";
+import { reordenarFeedConIA} from "../services/geminiService.js";
 
 /** Añade al post si el usuario autenticado ya dio like */
 function postPublic(post, userId) {
@@ -80,7 +81,7 @@ export const getFollowingFeed = async (req, res, next) => {
 export const createPost = async (req, res, next) => {
   try {
     const { contenido, deporte, ubicacion, tipo, imagen } = req.body;
-
+    
     const post = await Post.create({
       autor: req.user._id,
       contenido,
@@ -92,7 +93,79 @@ export const createPost = async (req, res, next) => {
 
     await post.populate("autor", "alias nombre avatar zona");
 
-    return res.status(201).json({ ok: true, post: postPublic(post, req.user._id) });
+    res.status(201).json({ ok: true, post: postPublic(post, req.user._id) });
+
+  } catch (err) {
+    next(err);
+  }
+};
+
+const cacheFeedIA = new Map();
+
+export const getParaTiFeed = async (req, res, next) => {
+  try {
+    
+    const userId = req.user._id.toString();
+    const ahora = Date.now();
+
+    // ¿Tenemos este feed en caché y es reciente (menos de 5 min)?
+    if (cacheFeedIA.has(userId)) {
+      const { posts, timestamp } = cacheFeedIA.get(userId);
+      if (ahora - timestamp < 5 * 60 * 1000) {
+        console.log("[IA Feed] Sirviendo desde Caché (Ahorrando API)");
+        return res.json({ ok: true, posts, source: "cache" });
+      }
+    }
+    // Traemos una cantidad mayor de posts candidatos (ej. los últimos 40)
+    // Filtramos los que no estén eliminados u ocultos
+    const postsCandidatos = await Post.find({ oculto: false, eliminado: false })
+      .sort({ createdAt: -1 })
+      .limit(40)
+      .populate("autor", "alias nombre avatar zona");
+
+    console.log(` [IA Feed] Posts candidatos encontrados: ${postsCandidatos.length}`);
+
+    // Extraemos los intereses del usuario (deportes y niveles)
+    const misIntereses = req.user.deportesNivel.map(d => ({
+      deporte: d.deporte,
+      nivel: d.nivel
+    }));
+
+    console.log(` [IA Feed] Intereses del usuario:`, JSON.stringify(misIntereses));
+
+    // Pedimos a Gemini que los ordene según afinidad real
+    const ordenIds = await reordenarFeedConIA(misIntereses, postsCandidatos);
+
+    let postsFinales;
+    if (ordenIds && Array.isArray(ordenIds)) {
+      console.log(` [IA Feed] Gemini ha devuelto un orden de ${ordenIds.length} IDs`);
+      // Reordenamos nuestro array original basándonos en el orden de IDs que dictó la IA
+      postsFinales = ordenIds
+        .map(id => postsCandidatos.find(p => p._id.toString() === id))
+        .filter(p => p !== undefined); // Por si acaso algún ID no coincide
+    } else {
+      console.warn(`[IA Feed] Gemini falló. Usando orden cronológico por defecto.`);
+      // Si la IA falla, devolvemos el orden por fecha como fallback
+      postsFinales = postsCandidatos;
+    }
+
+    // Paginación manual sobre el resultado ordenado por la IA
+    const page = Math.max(1, parseInt(req.query.page) || 1);
+    const limit = Math.min(50, parseInt(req.query.limit) || 20);
+    const paginados = postsFinales.slice((page - 1) * limit, page * limit);
+
+    // Guardamos en caché
+    const postsResponse = postsFinales.map(p => postPublic(p, req.user._id));
+    cacheFeedIA.set(userId, { 
+      posts: postsResponse, 
+      timestamp: ahora 
+    });
+
+    return res.json({
+      ok: true,
+      posts: paginados.map((p) => postPublic(p, req.user._id)),
+      totalEnFeed: postsFinales.length
+    });
   } catch (err) {
     next(err);
   }

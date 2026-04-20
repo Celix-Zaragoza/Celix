@@ -3,7 +3,7 @@ import {
   getMe, updateMe, getUserById,
   followUser, unfollowUser,
   getFollowers, getFollowing,
-  searchUsers,
+  searchUsers, getUserStats
 } from "../../controllers/users.controller.js";
 import { requireAuth } from "../../middlewares/auth.middleware.js";
 import { validateBody } from "../../middlewares/validate.middleware.js";
@@ -208,5 +208,21 @@ router.get("/:id/followers", requireAuth, getFollowers);
  *         description: Lista de seguidos
  */
 router.get("/:id/following", requireAuth, getFollowing);
+
+/**
+ * @swagger
+ * /api/v1/users/me/stats:
+ *   get:
+ *     summary: Estadisticas del usuario autenticado
+ *     tags: [Users]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Estadisticas del usuario
+ *       401:
+ *         description: No autenticado
+ */
+router.get("/me/stats", requireAuth, getUserStats);
 
 export default router;

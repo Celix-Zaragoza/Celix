@@ -1,6 +1,6 @@
 "use client";
 
-import React, { createContext, useContext, useState, ReactNode } from "react";
+import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
 export interface User {
   id: string;
@@ -37,9 +37,40 @@ export const useAuth = () => {
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
+  const [loading, setLoading] = useState(true); // ← nuevo
+
+  // ── Restaurar sesión al arrancar ──────────────────────────────────────────
+  useEffect(() => {
+    const restoreSession = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      try {
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001"}/api/v1/users/me`,
+          { headers: { Authorization: `Bearer ${token}` } }
+        );
+        if (res.ok) {
+          const data = await res.json();
+          setUser({ ...data.user, isAdmin: data.user.rol === "ADMIN" });
+        } else {
+          // Token inválido o expirado — limpiar
+          localStorage.removeItem("token");
+        }
+      } catch {
+        localStorage.removeItem("token");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    restoreSession();
+  }, []);
 
   const login = (userData: User) => {
-      setUser(userData);
+    setUser(userData);
   };
 
   const register = async (userData: Partial<User>): Promise<boolean> => {
@@ -70,7 +101,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider value={{ user, login, register, logout, updateUser, isAuthenticated: !!user }}>
-      {children}
+      {/* Mientras restaura la sesión no renderiza nada para evitar el flash */}
+      {loading ? null : children}
     </AuthContext.Provider>
   );
 };

@@ -3,14 +3,10 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../../context/AuthContext";
-import { Button } from "../../../components/ui/button";
-import { Input } from "../../../components/ui/input";
-import { Label } from "../../../components/ui/label";
-import { Textarea } from "../../../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../../components/ui/select";
 import { deportesDisponibles, zonasZaragoza } from "../../../data/mockData";
 import { toast } from "sonner";
-import { Check, ChevronDown, ChevronUp, X } from "lucide-react";
+import { Check, ChevronDown, ChevronUp, X, Camera } from "lucide-react";
 
 const NIVELES = [
   { value: 1, label: "Principiante" },
@@ -29,17 +25,28 @@ type FormData = {
   deportesNivel: Record<string, number>;
 };
 
+const inputStyle: React.CSSProperties = {
+  backgroundColor: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.1)",
+  color: "#f1f5f9",
+};
+
+const selectWrap: React.CSSProperties = {
+  backgroundColor: "rgba(255,255,255,0.06)",
+  border: "1px solid rgba(255,255,255,0.1)",
+  borderRadius: "12px",
+  overflow: "hidden",
+};
+
 export default function Page() {
   const { user, updateUser } = useAuth();
   const router = useRouter();
 
   const initialFormData: FormData = useMemo(() => {
-    // Convertir array deportesNivel a Record para el selector
     const deportesNivelMap: Record<string, number> = {};
     (user?.deportesNivel ?? []).forEach((d) => {
       deportesNivelMap[d.deporte] = d.nivel;
     });
-
     return {
       nombre: user?.nombre ?? "",
       alias: user?.alias ?? "",
@@ -53,6 +60,8 @@ export default function Page() {
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [expandedDeporte, setExpandedDeporte] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [avatarPreview, setAvatarPreview] = useState<string | null>(user?.avatar || null);
 
   if (!user) return null;
 
@@ -63,6 +72,28 @@ export default function Page() {
     value: FormData[K]
   ) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
+  };
+
+  const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setAvatarFile(file);
+    const reader = new FileReader();
+    reader.onloadend = () => setAvatarPreview(reader.result as string);
+    reader.readAsDataURL(file);
+  };
+
+  const uploadImage = async (file: File): Promise<string> => {
+    const fd = new FormData();
+    fd.append("file", file);
+    fd.append("upload_preset", "celix_posts");
+    const res = await fetch("https://api.cloudinary.com/v1_1/du36wk1j8/image/upload", {
+      method: "POST",
+      body: fd,
+    });
+    if (!res.ok) throw new Error("Error subiendo imagen");
+    const data = await res.json();
+    return data.secure_url;
   };
 
   const toggleDeporte = (deporte: string) => {
@@ -88,14 +119,18 @@ export default function Page() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (deportesSeleccionados.length === 0) {
       toast.error("Selecciona al menos un deporte");
       return;
     }
-
     setLoading(true);
     try {
+      // Subir avatar si hay uno nuevo
+      let avatarUrl = user?.avatar ?? "";
+      if (avatarFile) {
+        avatarUrl = await uploadImage(avatarFile);
+      }
+
       const res = await fetch("http://localhost:3001/api/v1/users/me", {
         method: "PATCH",
         headers: {
@@ -108,13 +143,13 @@ export default function Page() {
           bio: formData.bio,
           edad: Number(formData.edad),
           zona: formData.zona,
+          avatar: avatarUrl,
           deportesNivel: deportesSeleccionados.map((d) => ({
             deporte: d,
             nivel: formData.deportesNivel[d],
           })),
         }),
       });
-
       const data = await res.json();
       if (res.ok) {
         updateUser(data.user);
@@ -133,137 +168,205 @@ export default function Page() {
   };
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="bg-[#1e293b] rounded-xl border border-[rgba(148,163,184,0.2)] p-6 md:p-8">
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-[#f1f5f9]">Editar Perfil</h1>
-          <Button variant="ghost" onClick={() => router.push("/app/profile")} className="text-[#94a3b8]">
-            <X className="w-5 h-5" />
-          </Button>
+    <div className="max-w-4xl mx-auto">
+      <div
+        className="rounded-2xl p-6 md:p-8"
+        style={{ backgroundColor: "rgba(255,255,255,0.04)", border: "1px solid rgba(255,255,255,0.07)" }}
+      >
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-black" style={{ color: "#f1f5f9" }}>Editar Perfil</h1>
+            <p className="text-sm mt-0.5" style={{ color: "#94a3b8" }}>Actualiza tu información deportiva</p>
+          </div>
+          <button
+            onClick={() => router.push("/app/profile")}
+            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+            style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.08)" }}
+          >
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+
+          {/* Avatar */}
+          <div className="flex justify-center mb-2">
+            <div className="relative w-24 h-24 group">
+              <img
+                src={avatarPreview || `https://api.dicebear.com/7.x/initials/svg?seed=${user.nombre}`}
+                alt={user.nombre}
+                className="w-24 h-24 rounded-full object-cover"
+                style={{ border: "3px solid rgba(19,236,128,0.4)" }}
+              />
+              <label className="absolute inset-0 rounded-full flex items-center justify-center cursor-pointer bg-black/0 group-hover:bg-black/50 transition-all">
+                <Camera className="w-6 h-6 text-white opacity-0 group-hover:opacity-100 transition-all" />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={handleAvatarUpload}
+                  className="hidden"
+                />
+              </label>
+            </div>
+          </div>
+          <p className="text-center text-xs -mt-2" style={{ color: "rgba(148,163,184,0.6)" }}>
+            Haz clic en la foto para cambiarla
+          </p>
+
           {/* Nombre y alias */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className="text-[#f1f5f9]">Nombre completo</Label>
-              <Input
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold mb-2 uppercase tracking-widest" style={{ color: "#13ec80" }}>
+                Nombre completo
+              </label>
+              <input
                 value={formData.nombre}
                 onChange={(e) => handleChange("nombre", e.target.value)}
-                className="h-12"
+                className="w-full h-12 px-4 rounded-xl text-sm outline-none transition-all"
+                style={inputStyle}
+                onFocus={(e) => (e.target.style.borderColor = "#13ec80")}
+                onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
               />
             </div>
-            <div className="space-y-2">
-              <Label className="text-[#f1f5f9]">Alias</Label>
-              <Input
+            <div>
+              <label className="block text-xs font-bold mb-2 uppercase tracking-widest" style={{ color: "#13ec80" }}>
+                Alias
+              </label>
+              <input
                 value={formData.alias}
                 onChange={(e) => handleChange("alias", e.target.value)}
-                className="h-12"
+                className="w-full h-12 px-4 rounded-xl text-sm outline-none transition-all"
+                style={inputStyle}
+                onFocus={(e) => (e.target.style.borderColor = "#13ec80")}
+                onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
               />
             </div>
           </div>
 
           {/* Bio */}
-          <div className="space-y-2">
-            <Label className="text-[#f1f5f9]">Biografía</Label>
-            <Textarea
+          <div>
+            <label className="block text-xs font-bold mb-2 uppercase tracking-widest" style={{ color: "#13ec80" }}>
+              Biografía
+            </label>
+            <textarea
               value={formData.bio}
               onChange={(e) => handleChange("bio", e.target.value)}
               placeholder="Cuéntanos algo sobre ti..."
               rows={3}
+              className="w-full px-4 py-3 rounded-xl text-sm outline-none transition-all resize-none"
+              style={inputStyle}
+              onFocus={(e) => (e.target.style.borderColor = "#13ec80")}
+              onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
             />
           </div>
 
           {/* Edad y zona */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className="text-[#f1f5f9]">Edad</Label>
-              <Input
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold mb-2 uppercase tracking-widest" style={{ color: "#13ec80" }}>
+                Edad
+              </label>
+              <input
                 type="number"
                 value={formData.edad}
                 onChange={(e) => handleChange("edad", parseInt(e.target.value, 10))}
                 min="13"
                 max="120"
-                className="h-12"
+                className="w-full h-12 px-4 rounded-xl text-sm outline-none transition-all"
+                style={inputStyle}
+                onFocus={(e) => (e.target.style.borderColor = "#13ec80")}
+                onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
               />
             </div>
-            <div className="space-y-2">
-              <Label className="text-[#f1f5f9]">Zona de Zaragoza</Label>
-              <Select value={formData.zona} onValueChange={(v) => handleChange("zona", v)}>
-                <SelectTrigger className="h-12">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {zonasZaragoza.map((zona) => (
-                    <SelectItem key={zona} value={zona}>{zona}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+            <div>
+              <label className="block text-xs font-bold mb-2 uppercase tracking-widest" style={{ color: "#13ec80" }}>
+                Zona de Zaragoza
+              </label>
+              <div style={selectWrap}>
+                <Select value={formData.zona} onValueChange={(v) => handleChange("zona", v)}>
+                  <SelectTrigger className="h-12 border-0 bg-transparent text-sm focus:ring-0" style={{ color: "#f1f5f9" }}>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {zonasZaragoza.map((zona) => (
+                      <SelectItem key={zona} value={zona}>{zona}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
           {/* Deportes con nivel */}
-          <div className="space-y-3">
-            <Label className="text-[#f1f5f9]">Deportes y nivel</Label>
+          <div>
+            <label className="block text-xs font-bold mb-3 uppercase tracking-widest" style={{ color: "#13ec80" }}>
+              Deportes y nivel
+            </label>
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
               {deportesDisponibles.map((deporte) => {
                 const seleccionado = formData.deportesNivel[deporte] !== undefined;
                 const expandido = expandedDeporte === deporte;
                 return (
                   <div key={deporte} className="flex flex-col">
-                    <div className={`relative flex items-center justify-between rounded-lg border-2 transition-all
-                      ${seleccionado
-                        ? "border-[#13ec80] bg-[#13ec80]/10"
-                        : "border-[#334155] hover:border-[#475569]"
-                      }`}
+                    <div
+                      className="relative flex items-center justify-between rounded-xl transition-all"
+                      style={{
+                        backgroundColor: seleccionado ? "rgba(19,236,128,0.12)" : "rgba(255,255,255,0.05)",
+                        border: seleccionado ? "1px solid rgba(19,236,128,0.4)" : "1px solid rgba(255,255,255,0.08)",
+                      }}
                     >
                       <button
                         type="button"
                         onClick={() => toggleDeporte(deporte)}
                         className="flex-1 px-4 py-3 text-left"
                       >
-                        <span className={`text-sm font-medium ${seleccionado ? "text-[#13ec80]" : "text-[#94a3b8]"}`}>
+                        <span className="text-sm font-semibold" style={{ color: seleccionado ? "#13ec80" : "#94a3b8" }}>
                           {deporte}
                         </span>
                       </button>
-
                       {seleccionado && (
                         <button
                           type="button"
                           onClick={() => setExpandedDeporte(expandido ? null : deporte)}
-                          className="px-3 py-3 text-[#13ec80]"
+                          className="px-3 py-3"
+                          style={{ color: "#13ec80" }}
                         >
                           {expandido ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
                         </button>
                       )}
-
                       {seleccionado && !expandido && (
-                        <span className="absolute -top-2 -right-2 bg-[#13ec80] text-[#0f172a] text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center pointer-events-none">
+                        <span
+                          className="absolute -top-2 -right-2 text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center pointer-events-none"
+                          style={{ backgroundColor: "#13ec80", color: "#0a1628" }}
+                        >
                           {formData.deportesNivel[deporte]}
                         </span>
                       )}
                     </div>
 
                     {seleccionado && expandido && (
-                      <div className="mt-1 bg-[#0f172a] rounded-lg p-3 border border-[#334155]">
-                        <p className="text-xs text-[#94a3b8] mb-2">Nivel en {deporte}:</p>
-                        <div className="flex flex-col gap-1">
-                          {NIVELES.map((n) => (
-                            <button
-                              key={n.value}
-                              type="button"
-                              onClick={() => { setNivel(deporte, n.value); setExpandedDeporte(null); }}
-                              className={`flex items-center gap-2 px-3 py-2 rounded-md text-sm transition-all
-                                ${formData.deportesNivel[deporte] === n.value
-                                  ? "bg-[#13ec80] text-[#0f172a] font-semibold"
-                                  : "text-[#94a3b8] hover:bg-[#1e293b]"
-                                }`}
-                            >
-                              {formData.deportesNivel[deporte] === n.value && <Check className="w-3 h-3" />}
-                              <span>{n.value} — {n.label}</span>
-                            </button>
-                          ))}
-                        </div>
+                      <div
+                        className="mt-1 rounded-xl p-3 space-y-1"
+                        style={{ backgroundColor: "rgba(0,0,0,0.3)", border: "1px solid rgba(255,255,255,0.08)" }}
+                      >
+                        <p className="text-xs mb-2" style={{ color: "#94a3b8" }}>Nivel en {deporte}:</p>
+                        {NIVELES.map((n) => (
+                          <button
+                            key={n.value}
+                            type="button"
+                            onClick={() => { setNivel(deporte, n.value); setExpandedDeporte(null); }}
+                            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-all"
+                            style={{
+                              backgroundColor: formData.deportesNivel[deporte] === n.value ? "#13ec80" : "transparent",
+                              color: formData.deportesNivel[deporte] === n.value ? "#0a1628" : "#94a3b8",
+                              fontWeight: formData.deportesNivel[deporte] === n.value ? 600 : 400,
+                            }}
+                          >
+                            {formData.deportesNivel[deporte] === n.value && <Check className="w-3 h-3" />}
+                            <span>{n.value} — {n.label}</span>
+                          </button>
+                        ))}
                       </div>
                     )}
                   </div>
@@ -273,13 +376,23 @@ export default function Page() {
 
             {/* Resumen selección */}
             {deportesSeleccionados.length > 0 && (
-              <div className="bg-[#0f172a] rounded-lg p-4 border border-[#334155]">
-                <p className="text-xs text-[#94a3b8] mb-3 uppercase tracking-wider">Tu selección</p>
+              <div
+                className="mt-4 rounded-xl p-4"
+                style={{ backgroundColor: "rgba(0,0,0,0.2)", border: "1px solid rgba(255,255,255,0.06)" }}
+              >
+                <p className="text-xs mb-3 uppercase tracking-widest" style={{ color: "#94a3b8" }}>Tu selección</p>
                 <div className="flex flex-wrap gap-2">
                   {deportesSeleccionados.map((d) => (
-                    <span key={d} className="flex items-center gap-1 bg-[#13ec80]/10 text-[#13ec80] border border-[#13ec80]/30 rounded-full px-3 py-1 text-sm">
+                    <span
+                      key={d}
+                      className="flex items-center gap-1 rounded-full px-3 py-1 text-sm"
+                      style={{ backgroundColor: "rgba(19,236,128,0.1)", color: "#13ec80", border: "1px solid rgba(19,236,128,0.3)" }}
+                    >
                       {d}
-                      <span className="bg-[#13ec80] text-[#0f172a] rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold">
+                      <span
+                        className="rounded-full w-4 h-4 flex items-center justify-center text-xs font-bold"
+                        style={{ backgroundColor: "#13ec80", color: "#0a1628" }}
+                      >
                         {formData.deportesNivel[d]}
                       </span>
                     </span>
@@ -290,22 +403,23 @@ export default function Page() {
           </div>
 
           {/* Botones */}
-          <div className="flex gap-3 pt-4">
-            <Button
+          <div className="flex gap-3 pt-2">
+            <button
               type="button"
-              variant="outline"
-              className="flex-1 h-12 border-[#334155] text-[#94a3b8]"
               onClick={() => router.push("/app/profile")}
+              className="flex-1 h-12 rounded-xl text-sm font-semibold transition-all"
+              style={{ backgroundColor: "rgba(255,255,255,0.06)", color: "#94a3b8", border: "1px solid rgba(255,255,255,0.1)" }}
             >
               Cancelar
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
-              className="flex-1 h-12 bg-[#13ec80] text-[#102219] hover:bg-[#10d671]"
               disabled={loading || deportesSeleccionados.length === 0}
+              className="flex-1 h-12 rounded-xl font-bold text-sm transition-all disabled:opacity-60"
+              style={{ backgroundColor: "#13ec80", color: "#0a1628" }}
             >
-              {loading ? "Guardando..." : "Guardar cambios"}
-            </Button>
+              {loading ? "Guardando..." : "Guardar cambios →"}
+            </button>
           </div>
         </form>
       </div>

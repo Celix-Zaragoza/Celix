@@ -5,6 +5,7 @@ import { useRouter, usePathname } from "next/navigation";
 import { useAuth } from "../context/AuthContext";
 import { Users, FileText, Calendar, ArrowLeft, LogOut } from "lucide-react";
 import { Button } from "../components/ui/button";
+import { Toaster } from "sonner";
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, user, logout } = useAuth();
@@ -95,7 +96,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       </header>
 
       {/* Main Content */}
-      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">{children}</main>
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 pb-24 md:pb-8">{children}</main>
 
       {/* Mobile Bottom Navigation */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 bg-[#0f172a] border-t border-[rgba(148,163,184,0.2)] z-50">
@@ -115,6 +116,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           ))}
         </div>
       </nav>
+      <Toaster richColors position="top-right" /> 
     </div>
   );
 }

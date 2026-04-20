@@ -2,10 +2,6 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Textarea } from "../../components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
 import { deportesDisponibles, zonasZaragoza } from "../../data/mockData";
 import { toast } from "sonner";
@@ -24,7 +20,7 @@ export default function Page() {
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
-  
+
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
@@ -32,45 +28,35 @@ export default function Page() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
-
-    setFile(selectedFile); // 👈 GUARDAS EL FILE REAL
-
+    setFile(selectedFile);
     const reader = new FileReader();
     reader.onloadend = () => setImagePreview(reader.result as string);
     reader.readAsDataURL(selectedFile);
   };
-  
+
   const uploadImage = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
-    formData.append("upload_preset", "tu_preset");
-
-    const res = await fetch("https://api.cloudinary.com/v1_1/TU_CLOUD/image/upload", {
+    formData.append("upload_preset", "celix_posts");
+    const res = await fetch("https://api.cloudinary.com/v1_1/du36wk1j8/image/upload", {
       method: "POST",
       body: formData,
     });
-
+    if (!res.ok) throw new Error("Error subiendo imagen");
     const data = await res.json();
     return data.secure_url;
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-
     if (!formData.deporte || !formData.ubicacion || !formData.contenido) {
       toast.error("Por favor, completa todos los campos obligatorios");
       return;
     }
-
     setLoading(true);
-
     try {
-      let imageUrl = "";
-
-      // 👇 SUBES LA IMAGEN SOLO SI EXISTE
-      if (file) {
-        imageUrl = await uploadImage(file);
-      }
+      let imageUrl: string | null = null;
+      if (file) imageUrl = await uploadImage(file);
 
       const res = await fetch("http://localhost:3001/api/v1/posts", {
         method: "POST",
@@ -83,15 +69,12 @@ export default function Page() {
           deporte: formData.deporte,
           ubicacion: formData.ubicacion,
           tipo: "entrenamiento",
-          imagen: imageUrl, // 👈 AQUÍ VA LA URL, NO base64
+          imagen: imageUrl,
         }),
       });
-
       if (!res.ok) throw new Error();
-
       toast.success("Publicación creada exitosamente");
       router.push("/app/feed");
-
     } catch (error) {
       console.error(error);
       toast.error("Hubo un error al crear la publicación");
@@ -100,115 +83,190 @@ export default function Page() {
     }
   };
 
+  const selectTriggerStyle = "h-12 rounded-xl text-sm bg-transparent border-0 text-[#f1f5f9] focus:ring-0";
+
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="bg-[#1e293b] rounded-xl border border-[rgba(148,163,184,0.2)] p-6 md:p-8">
+    <div className="max-w-4xl mx-auto">
+      <div
+        className="rounded-2xl p-6 md:p-8"
+        style={{
+          backgroundColor: "rgba(255,255,255,0.04)",
+          border: "1px solid rgba(255,255,255,0.07)",
+        }}
+      >
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
-          <h1 className="text-3xl font-bold text-[#f1f5f9]">Crear publicación</h1>
-          <Button
-            variant="ghost"
+        <div className="flex items-center justify-between mb-8">
+          <div>
+            <h1 className="text-2xl font-black" style={{ color: "#f1f5f9" }}>
+              Crear publicación
+            </h1>
+            <p className="text-sm mt-0.5" style={{ color: "#94a3b8" }}>
+              Comparte tu actividad deportiva
+            </p>
+          </div>
+          <button
             onClick={() => router.push("/app/feed")}
-            className="text-[#94a3b8] hover:text-[#f1f5f9] hover:bg-[#334155]"
+            className="w-9 h-9 rounded-xl flex items-center justify-center transition-all"
+            style={{
+              backgroundColor: "rgba(255,255,255,0.06)",
+              color: "#94a3b8",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
           >
-            <X className="w-5 h-5" />
-          </Button>
+            <X className="w-4 h-4" />
+          </button>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-6">
+
           {/* User Info */}
           {user && (
-            <div className="flex items-center gap-3 pb-4 border-b border-[rgba(148,163,184,0.2)]">
+            <div
+              className="flex items-center gap-3 pb-5"
+              style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+            >
               <img
-            src={user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${user.nombre}`}
-            alt={user.nombre}
-            className="w-16 h-16 rounded-full object-cover border-4 border-[#13ec80]"
-          />
+                src={user.avatar || `https://api.dicebear.com/7.x/initials/svg?seed=${user.nombre}`}
+                alt={user.nombre}
+                className="w-12 h-12 rounded-full object-cover flex-shrink-0"
+                style={{ border: "2px solid rgba(19,236,128,0.4)" }}
+              />
               <div>
-                <h3 className="font-bold text-[#f1f5f9]">{user.nombre}</h3>
-                <p className="text-sm text-[#94a3b8]">@{user.alias}</p>
+                <p className="font-bold text-sm" style={{ color: "#f1f5f9" }}>{user.nombre}</p>
+                <p className="text-xs" style={{ color: "#94a3b8" }}>@{user.alias}</p>
               </div>
             </div>
           )}
 
           {/* Deporte y Zona */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div className="space-y-2">
-              <Label className="text-[#f1f5f9]">Deporte *</Label>
-              <Select
-                value={formData.deporte}
-                onValueChange={(value: string) => handleChange("deporte", value)}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label
+                className="block text-xs font-bold mb-2 uppercase tracking-widest"
+                style={{ color: "#13ec80" }}
               >
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Selecciona un deporte" />
-                </SelectTrigger>
-                <SelectContent>
-                  {deportesDisponibles.map((deporte) => (
-                    <SelectItem key={deporte} value={deporte}>
-                      {deporte}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                Deporte *
+              </label>
+              <div
+                className="rounded-xl overflow-hidden"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                }}
+              >
+                <Select
+                  value={formData.deporte}
+                  onValueChange={(value) => handleChange("deporte", value)}
+                >
+                  <SelectTrigger className={selectTriggerStyle}>
+                    <SelectValue placeholder="Selecciona un deporte" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {deportesDisponibles.map((deporte) => (
+                      <SelectItem key={deporte} value={deporte}>{deporte}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label className="text-[#f1f5f9]">Zona *</Label>
-              <Select
-                value={formData.ubicacion}
-                onValueChange={(value: string) => handleChange("ubicacion", value)}
+            <div>
+              <label
+                className="block text-xs font-bold mb-2 uppercase tracking-widest"
+                style={{ color: "#13ec80" }}
               >
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Selecciona una zona" />
-                </SelectTrigger>
-                <SelectContent>
-                  {zonasZaragoza.map((zona) => (
-                    <SelectItem key={zona} value={zona}>
-                      {zona}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                Zona *
+              </label>
+              <div
+                className="rounded-xl overflow-hidden"
+                style={{
+                  backgroundColor: "rgba(255,255,255,0.06)",
+                  border: "1px solid rgba(255,255,255,0.1)",
+                }}
+              >
+                <Select
+                  value={formData.ubicacion}
+                  onValueChange={(value) => handleChange("ubicacion", value)}
+                >
+                  <SelectTrigger className={selectTriggerStyle}>
+                    <SelectValue placeholder="Selecciona una zona" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {zonasZaragoza.map((zona) => (
+                      <SelectItem key={zona} value={zona}>{zona}</SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
             </div>
           </div>
 
           {/* Contenido */}
-          <div className="space-y-2">
-            <Label className="text-[#f1f5f9]">Contenido *</Label>
-            <Textarea
+          <div>
+            <label
+              className="block text-xs font-bold mb-2 uppercase tracking-widest"
+              style={{ color: "#13ec80" }}
+            >
+              Contenido *
+            </label>
+            <textarea
               value={formData.contenido}
               onChange={(e) => handleChange("contenido", e.target.value)}
               placeholder="Comparte tu experiencia deportiva..."
               rows={5}
               maxLength={500}
+              className="w-full rounded-xl p-4 text-sm resize-none outline-none transition-all"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.06)",
+                border: "1px solid rgba(255,255,255,0.1)",
+                color: "#f1f5f9",
+              }}
+              onFocus={(e) => (e.target.style.borderColor = "#13ec80")}
+              onBlur={(e) => (e.target.style.borderColor = "rgba(255,255,255,0.1)")}
             />
-            <p className="text-sm text-[#94a3b8] text-right">
+            <p className="text-xs mt-1.5 text-right" style={{ color: "rgba(148,163,184,0.6)" }}>
               {formData.contenido.length}/500
             </p>
           </div>
 
           {/* Image Upload */}
-          <div className="space-y-2">
-            <Label className="text-[#f1f5f9]">Imagen (opcional)</Label>
+          <div>
+            <label
+              className="block text-xs font-bold mb-2 uppercase tracking-widest"
+              style={{ color: "#13ec80" }}
+            >
+              Imagen <span style={{ color: "#94a3b8", textTransform: "none", fontSize: "11px" }}>(opcional)</span>
+            </label>
             {imagePreview ? (
-              <div className="relative">
+              <div className="relative rounded-xl overflow-hidden">
                 <img
                   src={imagePreview}
                   alt="Preview"
-                  className="w-full h-64 object-cover rounded-lg"
+                  className="w-full h-56 object-cover"
                 />
                 <button
                   type="button"
-                  onClick={() => setImagePreview(null)}
-                  className="absolute top-2 right-2 bg-[#0f172a]/80 rounded-full p-2 hover:bg-[#0f172a] transition-colors"
+                  onClick={() => { setImagePreview(null); setFile(null); }}
+                  className="absolute top-3 right-3 w-8 h-8 rounded-full flex items-center justify-center transition-all"
+                  style={{ backgroundColor: "rgba(0,0,0,0.6)", color: "#f1f5f9" }}
                 >
-                  <X className="w-4 h-4 text-[#f1f5f9]" />
+                  <X className="w-4 h-4" />
                 </button>
               </div>
             ) : (
-              <label className="flex flex-col items-center justify-center h-40 border-2 border-dashed border-[#334155] rounded-lg cursor-pointer hover:border-[#13ec80]/50 transition-colors group">
-                <ImageIcon className="w-10 h-10 text-[#334155] group-hover:text-[#13ec80]/50 mb-2 transition-colors" />
-                <span className="text-sm text-[#94a3b8]">Haz clic para subir una imagen</span>
+              <label
+                className="flex flex-col items-center justify-center h-36 rounded-xl cursor-pointer transition-all group"
+                style={{
+                  border: "2px dashed rgba(255,255,255,0.1)",
+                  backgroundColor: "rgba(255,255,255,0.02)",
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.borderColor = "rgba(19,236,128,0.3)")}
+                onMouseLeave={(e) => (e.currentTarget.style.borderColor = "rgba(255,255,255,0.1)")}
+              >
+                <ImageIcon className="w-8 h-8 mb-2" style={{ color: "rgba(148,163,184,0.4)" }} />
+                <span className="text-sm" style={{ color: "#94a3b8" }}>
+                  Haz clic para subir una imagen
+                </span>
                 <input
                   type="file"
                   accept="image/*"
@@ -221,21 +279,30 @@ export default function Page() {
 
           {/* Botones */}
           <div className="flex gap-3 pt-2">
-            <Button
+            <button
               type="button"
-              variant="outline"
-              className="flex-1 h-12 border-[#334155] text-[#94a3b8] hover:bg-[#334155]"
               onClick={() => router.push("/app/feed")}
+              className="flex-1 h-12 rounded-xl text-sm font-semibold transition-all"
+              style={{
+                backgroundColor: "rgba(255,255,255,0.06)",
+                color: "#94a3b8",
+                border: "1px solid rgba(255,255,255,0.1)",
+              }}
             >
               Cancelar
-            </Button>
-            <Button
+            </button>
+            <button
               type="submit"
-              className="flex-1 h-12 bg-[#13ec80] text-[#102219] hover:bg-[#10d671]"
               disabled={loading}
+              className="flex-1 h-12 rounded-xl font-bold text-sm transition-all"
+              style={{
+                backgroundColor: loading ? "#10d671" : "#13ec80",
+                color: "#0a1628",
+                opacity: loading ? 0.8 : 1,
+              }}
             >
-              {loading ? "Publicando..." : "Publicar"}
-            </Button>
+              {loading ? "Publicando..." : "Publicar →"}
+            </button>
           </div>
         </form>
       </div>

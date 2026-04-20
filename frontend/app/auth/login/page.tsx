@@ -3,10 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useAuth } from "../../context/AuthContext";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Eye, EyeOff } from "lucide-react";
+import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react"; // Añadido AlertCircle
 import { toast } from "sonner";
 
 export default function Page() {
@@ -14,15 +11,18 @@ export default function Page() {
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null); // Nuevo estado para errores
 
   const { login } = useAuth();
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError(null); // Limpiar errores previos
 
     if (!email || !password) {
-      toast.error("Por favor, completa todos los campos");
+      setError("Por favor, completa todos los campos");
+      toast.error("Campos incompletos");
       return;
     }
 
@@ -30,129 +30,135 @@ export default function Page() {
     try {
       const response = await fetch("http://localhost:3001/api/v1/auth/login", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: email,
-          password: password,
-        }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email, password }), // <--- 1. Verifica que estos nombres coincidan con el backend
       });
-      const data = await response.json();
-      if (data.ok) {
-        console.log("✅Esto devuelve el login", data);
+
+      const data = await response.json(); // <--- 2. Siempre parseamos el JSON
+
+      if (response.ok && data.ok) {
+        // ÉXITO
         localStorage.setItem("token", data.token);
-        login(data.user); 
-        toast.success("¡Bienvenido a CELIX!");
+        login({ ...data.user, isAdmin: data.user.rol === "ADMIN" });
+        toast.success("¡Bienvenido!");
         router.push("/app/feed");
       } else {
-        toast.error("Credenciales incorrectas");
+        // ERROR DINÁMICO
+        // Aquí data.message será "Credenciales incorrectas", "Cuenta bloqueada" o "invalid body"
+        const errorMsg = data.message || "Error al iniciar sesión";
+        setError(errorMsg); 
+        toast.error(errorMsg);
       }
-    } catch {
-      toast.error("Error al iniciar sesión");
+    } catch (err) {
+      setError("Error de conexión");
+      toast.error("Servidor no disponible");
+
     } finally {
       setLoading(false);
     }
   };
 
+  const inputBase: React.CSSProperties = {
+    backgroundColor: "rgba(255,255,255,0.07)",
+    border: "1px solid rgba(255,255,255,0.1)",
+    color: "#f1f5f9",
+  };
+
   return (
-    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-[#1e293b] rounded-2xl shadow-2xl p-8 border border-[rgba(148,163,184,0.2)]">
-          {/* Logo */}
-          <div className="text-center mb-8">
-            <h1 className="text-4xl font-bold text-[#13ec80] mb-2 uppercase tracking-wide">CELIX</h1>
-            <p className="text-[#94a3b8]">Inicia sesión en tu cuenta</p>
+    <div className="min-h-screen flex" style={{ backgroundColor: "#0d1f16" }}>
+      {/* ── Panel izquierdo (desktop) - Sin cambios ── */}
+      <div className="hidden lg:flex flex-col justify-between w-[45%] relative overflow-hidden p-10" style={{ backgroundColor: "#0f2318" }}>
+          {/* ... (tu código de diseño permanece igual) ... */}
+          <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(ellipse at 60% 60%, #13ec80 0%, transparent 70%)" }} />
+          <div className="relative flex items-center gap-2 z-10">
+            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#13ec80" }}>
+              <span className="text-lg font-black" style={{ color: "#0a1628" }}>⚡</span>
+            </div>
+            <span className="text-xl font-black tracking-widest" style={{ color: "#13ec80" }}>CELIX</span>
+          </div>
+          <div className="relative z-10">
+            <p className="text-sm font-semibold mb-3 uppercase tracking-widest" style={{ color: "#13ec80" }}>Red social deportiva</p>
+            <h1 className="text-5xl font-black leading-tight mb-6" style={{ color: "#f1f5f9" }}>SUPERA TUS <span style={{ color: "#13ec80" }}>LÍMITES</span></h1>
+          </div>
+          <div className="relative z-10 flex justify-center">
+             <div className="w-56 h-56 rounded-full flex items-center justify-center" style={{ background: "radial-gradient(circle at 35% 35%, #b5651d, #3d1a00)", boxShadow: "0 0 60px rgba(19,236,128,0.15), inset 0 0 40px rgba(0,0,0,0.4)" }}>
+               <span style={{ fontSize: "7rem" }}>🏀</span>
+             </div>
+          </div>
+          <button onClick={() => router.push("/")} className="relative z-10 text-sm self-start hover:underline" style={{ color: "rgba(148,163,184,0.6)" }}>← Volver al inicio</button>
+      </div>
+
+      {/* ── Panel derecho — Formulario ── */}
+      <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
+        <div className="w-full max-w-md">
+          <div className="mb-8">
+            <h2 className="text-3xl font-black mb-2" style={{ color: "#f1f5f9" }}>Iniciar Sesión</h2>
+            <p className="text-sm" style={{ color: "#94a3b8" }}>Bienvenido de nuevo. Por favor, inicie sesión.</p>
           </div>
 
-          {/* Form */}
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="space-y-2">
-              <Label htmlFor="email">Correo electrónico</Label>
-              <Input
-                id="email"
-                type="email"
-                placeholder="tu@email.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                className="h-12"
-              />
+          <form onSubmit={handleSubmit} className="space-y-5">
+            {/* Input Email */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>Correo electrónico</label>
+              <div className="relative">
+                <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#4ade80" }} />
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  className="w-full h-12 pl-10 pr-4 rounded-lg text-sm outline-none transition-all"
+                  style={{...inputBase, borderColor: error ? "#ef4444" : "rgba(255,255,255,0.1)"}}
+                  placeholder="correo@ejemplo.com"
+                />
+              </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="password">Contraseña</Label>
+            {/* Input Password */}
+            <div>
+              <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>Contraseña</label>
               <div className="relative">
-                <Input
-                  id="password"
+                <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#4ade80" }} />
+                <input
                   type={showPassword ? "text" : "password"}
-                  placeholder="••••••••"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  className="h-12 pr-10"
+                  className="w-full h-12 pl-10 pr-10 rounded-lg text-sm outline-none transition-all"
+                  style={{...inputBase, borderColor: error ? "#ef4444" : "rgba(255,255,255,0.1)"}}
+                  placeholder="••••••••"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
-                >
-                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
+                <button type="button" onClick={() => setShowPassword((v) => !v)} className="absolute right-3 top-1/2 -translate-y-1/2" style={{ color: "#94a3b8" }}>
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
 
-            <div className="flex items-center justify-between text-sm">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input type="checkbox" className="rounded border-gray-300" />
-                <span className="text-[#94a3b8]">Recordarme</span>
-              </label>
-              <a href="#" className="text-[#13ec80] hover:underline">
-                ¿Olvidaste tu contraseña?
-              </a>
-            </div>
+            {/* ── Mensaje de Error Visual ── */}
+            {error && (
+              <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/50 text-red-400 text-xs animate-in fade-in zoom-in duration-200">
+                <AlertCircle className="w-4 h-4 shrink-0" />
+                <p>{error}</p>
+              </div>
+            )}
 
-            <Button
-              type="submit"
-              className="w-full h-12 text-lg bg-[#13ec80] text-[#102219] hover:bg-[#10d671]"
-              disabled={loading}
-            >
-              {loading ? "Iniciando sesión..." : "Iniciar sesión"}
-            </Button>
-          </form>
-
-          {/* Demo credentials */}
-          <div className="mt-6 p-4 bg-[#334155] rounded-lg border border-[rgba(148,163,184,0.2)]">
-            <p className="text-sm text-[#13ec80] mb-2 font-medium">💡 Credenciales de prueba:</p>
-            <div className="text-sm text-[#f1f5f9] space-y-1">
-              <p>Usuario: cualquier@email.com</p>
-              <p>Admin: admin@celix.com</p>
-              <p>Contraseña: cualquier texto</p>
-            </div>
-          </div>
-
-          {/* Register Link */}
-          <div className="mt-6 text-center">
-            <p className="text-[#94a3b8]">
-              ¿No tienes cuenta?{" "}
-              <button
-                type="button"
-                onClick={() => router.push("/auth/register")}
-                className="text-[#13ec80] hover:underline font-medium"
-              >
-                Regístrate aquí
-              </button>
-            </p>
-          </div>
-
-          {/* Back to home */}
-          <div className="mt-4 text-center">
             <button
-              type="button"
-              onClick={() => router.push("/")}
-              className="text-[#94a3b8] hover:text-[#f1f5f9] text-sm"
+              type="submit"
+              disabled={loading}
+              className="w-full h-12 rounded-lg font-bold text-base flex items-center justify-center gap-2 transition-all mt-2"
+              style={{
+                backgroundColor: loading ? "#10d671" : "#13ec80",
+                color: "#0a1628",
+                opacity: loading ? 0.8 : 1,
+              }}
             >
-              ← Volver al inicio
+              {loading ? "Iniciando sesión..." : <>Iniciar Sesión <span>→</span></>}
             </button>
-          </div>
+
+            {/* Resto de links y footer - Sin cambios */}
+            <p className="text-center text-sm pt-1" style={{ color: "#94a3b8" }}>
+              ¿No tienes una cuenta?{" "}
+              <button type="button" onClick={() => router.push("/auth/register")} className="font-semibold hover:underline" style={{ color: "#13ec80" }}>Regístrate</button>
+            </p>
+          </form>
         </div>
       </div>
     </div>

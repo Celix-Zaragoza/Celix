@@ -1,7 +1,13 @@
 import { Router } from "express";
 import {
-  getPosts, getFollowingFeed, createPost,
-  deletePost, likePost, unlikePost, getPostsByUser,
+  getPosts, 
+  getFollowingFeed, 
+  getParaTiFeed, 
+  createPost,
+  deletePost, 
+  likePost, 
+  unlikePost, 
+  getPostsByUser,
 } from "../../controllers/posts.controller.js";
 import { requireAuth } from "../../middlewares/auth.middleware.js";
 import { validateBody } from "../../middlewares/validate.middleware.js";
@@ -15,6 +21,30 @@ const router = Router();
  *   name: Posts
  *   description: Publicaciones y feeds
  */
+
+/**
+ * @swagger
+ * /api/v1/posts/para-ti:
+ *   get:
+ *     summary: Feed personalizado Para ti mediante IA Gemini
+ *     description: Devuelve un feed ordenado por relevancia segun los deportes y niveles del usuario.
+ *     tags: [Posts]
+ *     parameters:
+ *       - in: query
+ *         name: page
+ *         schema:
+ *           type: integer
+ *           default: 1
+ *       - in: query
+ *         name: limit
+ *         schema:
+ *           type: integer
+ *           default: 20
+ *     responses:
+ *       200:
+ *         description: Lista de posts ordenada por afinidad
+ */
+router.get("/para-ti", requireAuth, getParaTiFeed);
 
 /**
  * @swagger

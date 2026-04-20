@@ -2,10 +2,7 @@
 
 import { useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Button } from "../../components/ui/button";
-import { Input } from "../../components/ui/input";
-import { Label } from "../../components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "../../components/ui/select";
+import { Calendar, User } from "lucide-react";
 import { zonasZaragoza } from "../../data/mockData";
 import { toast } from "sonner";
 
@@ -23,10 +20,7 @@ export default function CreateProfile1Client() {
   });
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setFormData((prev) => ({
-      ...prev,
-      [e.target.name]: e.target.value,
-    }));
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -44,9 +38,7 @@ export default function CreateProfile1Client() {
     }
 
     const qs = new URLSearchParams({
-      nombre,
-      email,
-      alias,
+      nombre, email, alias,
       edad: String(edad),
       zona: formData.zona,
     }).toString();
@@ -54,76 +46,158 @@ export default function CreateProfile1Client() {
     router.push(`/auth/create-profile-2?${qs}`);
   };
 
+  const inputStyle: React.CSSProperties = {
+    backgroundColor: "rgba(255,255,255,0.06)",
+    border: "1px solid rgba(19,236,128,0.3)",
+    color: "#f1f5f9",
+    width: "100%",
+    height: "48px",
+    borderRadius: "8px",
+    paddingLeft: "40px",
+    paddingRight: "12px",
+    fontSize: "14px",
+    outline: "none",
+  };
+
   return (
-    <div className="min-h-screen bg-[#0f172a] flex items-center justify-center p-4">
-      <div className="w-full max-w-md">
-        <div className="bg-[#1e293b] rounded-2xl shadow-2xl p-8 border border-[rgba(148,163,184,0.2)]">
-          <div className="mb-8">
-            <div className="flex items-center justify-between mb-2">
-              <span className="text-sm font-medium text-[#13ec80]">Paso 1 de 2</span>
-              <span className="text-sm text-[#94a3b8]">50%</span>
-            </div>
-            <div className="w-full bg-[#334155] rounded-full h-2">
-              <div className="bg-[#13ec80] h-2 rounded-full" style={{ width: "50%" }} />
-            </div>
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: "#0d1f16" }}>
+
+      {/* Header */}
+      <header className="flex items-center justify-between px-6 py-4">
+        <div className="flex items-center gap-2">
+          <div className="w-7 h-7 rounded-md flex items-center justify-center" style={{ backgroundColor: "#13ec80" }}>
+            <span className="text-sm font-black" style={{ color: "#0a1628" }}>⚡</span>
           </div>
+          <span className="text-lg font-black tracking-widest" style={{ color: "#13ec80" }}>CELIX</span>
+        </div>
+        <span className="text-sm" style={{ color: "#94a3b8" }}>
+          Paso <span style={{ color: "#13ec80" }}>1</span> de 2
+        </span>
+      </header>
 
-          <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-[#f1f5f9] mb-2">Personaliza tu perfil</h1>
-            <p className="text-[#94a3b8]">Cuéntanos sobre ti</p>
-          </div>
+      {/* Barra de progreso */}
+      <div className="px-6 pb-6">
+        <div className="flex items-center justify-between mb-2">
+          <span className="text-sm font-semibold" style={{ color: "#f1f5f9" }}>Datos Básicos</span>
+          <span className="text-xs" style={{ color: "#94a3b8" }}>0% completado</span>
+        </div>
+        <div className="w-full h-1 rounded-full" style={{ backgroundColor: "rgba(255,255,255,0.1)" }}>
+          <div className="h-1 rounded-full" style={{ width: "50%", backgroundColor: "#13ec80" }} />
+        </div>
+      </div>
 
-          <form onSubmit={handleSubmit} className="space-y-6">
-
-            <div className="space-y-2">
-              <Label htmlFor="edad">Edad</Label>
-              <Input
-                id="edad"
-                name="edad"
-                type="number"
-                placeholder="25"
-                min="13"
-                max="120"
-                value={formData.edad}
-                onChange={handleChange}
-                className="h-12"
-              />
+      {/* Contenido */}
+      <div className="flex-1 flex items-start justify-center px-6 pb-10">
+        <div className="w-full max-w-lg">
+          <div
+            className="rounded-2xl p-8"
+            style={{
+              backgroundColor: "rgba(255,255,255,0.04)",
+              border: "1px solid rgba(255,255,255,0.08)",
+            }}
+          >
+            {/* Título */}
+            <div className="mb-8">
+              <h1 className="text-3xl font-black leading-tight mb-3" style={{ color: "#f1f5f9" }}>
+                Antes de continuar, completa tu perfil deportivo
+              </h1>
+              <p className="text-sm leading-relaxed" style={{ color: "rgba(148,163,184,0.8)" }}>
+                Cuéntanos qué practicas y qué nivel tienes para conectarte con los mejores grupos en Zaragoza.
+              </p>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="zona">Zona de Zaragoza</Label>
-              <Select
-                value={formData.zona}
-                onValueChange={(value: string) => setFormData((prev) => ({ ...prev, zona: value }))}
-              >
-                <SelectTrigger className="h-12">
-                  <SelectValue placeholder="Selecciona tu zona" />
-                </SelectTrigger>
-                <SelectContent>
+            <form onSubmit={handleSubmit} className="space-y-6">
+
+              {/* Edad */}
+              <div>
+                <label
+                  className="block text-xs font-bold mb-2 uppercase tracking-widest"
+                  style={{ color: "#13ec80" }}
+                >
+                  Edad
+                </label>
+                <div className="relative">
+                  <Calendar className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: "#13ec80" }} />
+                  <input
+                    id="edad"
+                    name="edad"
+                    type="number"
+                    placeholder="¿Cuántos años tienes?"
+                    min="13"
+                    max="120"
+                    value={formData.edad}
+                    onChange={handleChange}
+                    style={inputStyle}
+                    onFocus={(e) => (e.target.style.borderColor = "#13ec80")}
+                    onBlur={(e) => (e.target.style.borderColor = "rgba(19,236,128,0.3)")}
+                  />
+                </div>
+              </div>
+
+              {/* Zona */}
+              <div>
+                <label
+                  className="block text-xs font-bold mb-3 uppercase tracking-widest"
+                  style={{ color: "#13ec80" }}
+                >
+                  Zona de Zaragoza
+                </label>
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                   {zonasZaragoza.map((zona) => (
-                    <SelectItem key={zona} value={zona}>
-                      {zona}
-                    </SelectItem>
+                    <button
+                      key={zona}
+                      type="button"
+                      onClick={() => setFormData((prev) => ({ ...prev, zona }))}
+                      className="h-10 rounded-lg text-sm font-semibold transition-all"
+                      style={{
+                        backgroundColor: formData.zona === zona
+                          ? "#13ec80"
+                          : "rgba(255,255,255,0.06)",
+                        color: formData.zona === zona ? "#0a1628" : "#f1f5f9",
+                        border: formData.zona === zona
+                          ? "1px solid #13ec80"
+                          : "1px solid rgba(255,255,255,0.1)",
+                      }}
+                    >
+                      {zona.toUpperCase()}
+                    </button>
                   ))}
-                </SelectContent>
-              </Select>
-              <p className="text-sm text-gray-500">Esto nos ayudará a conectarte con deportistas cercanos</p>
-            </div>
+                </div>
+                <p className="text-xs mt-2" style={{ color: "rgba(148,163,184,0.6)" }}>
+                  Esto nos ayudará a conectarte con deportistas cercanos
+                </p>
+              </div>
 
-            <div className="flex gap-3 pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                className="flex-1 h-12"
-                onClick={() => router.push("/auth/register")}
-              >
-                Atrás
-              </Button>
-              <Button type="submit" className="flex-1 h-12">
-                Siguiente
-              </Button>
-            </div>
-          </form>
+              {/* Botones */}
+              <div className="flex gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => router.push("/auth/register")}
+                  className="flex items-center gap-2 px-5 h-12 rounded-lg text-sm font-semibold transition-all"
+                  style={{
+                    backgroundColor: "rgba(255,255,255,0.06)",
+                    color: "#f1f5f9",
+                    border: "1px solid rgba(255,255,255,0.1)",
+                  }}
+                >
+                  ← Atrás
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 h-12 rounded-lg font-bold text-base flex items-center justify-center gap-2 transition-all"
+                  style={{ backgroundColor: "#13ec80", color: "#0a1628" }}
+                >
+                  Continuar →
+                </button>
+              </div>
+            </form>
+          </div>
+
+          {/* Footer */}
+          <p className="text-center text-xs mt-6" style={{ color: "rgba(148,163,184,0.4)" }}>
+            © 2024 CELIX Zaragoza. Al entrar aceptas nuestros{" "}
+            <a href="#" className="underline" style={{ color: "rgba(148,163,184,0.6)" }}>Términos de Servicio</a>.
+          </p>
         </div>
       </div>
     </div>

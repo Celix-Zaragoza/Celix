@@ -49,7 +49,7 @@ const eventSchema = new mongoose.Schema(
     imagen: {
       type: String,
       trim: true,
-      default: null,
+      default: "",
     },
     // URL de inscripción oficial
     registrationUrl: {
