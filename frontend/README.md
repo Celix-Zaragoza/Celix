@@ -1,36 +1,79 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# CELIX — Frontend
 
-## Getting Started
+Interfaz de usuario de CELIX, desarrollada con Next.js y desplegada en Vercel.
 
-First, run the development server:
+## Stack
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+- **Framework:** Next.js 14 (App Router)
+- **Estilos:** Tailwind CSS
+- **Componentes UI:** shadcn/ui
+- **Gráficas:** Recharts
+- **Mapas:** Leaflet
+- **Mensajería en tiempo real:** Socket.io client
+- **Notificaciones:** Sonner
+- **Despliegue:** Vercel
+
+## Estructura
+
+```
+frontend/
+├── app/
+│   ├── app/                  # Rutas protegidas de la app
+│   │   ├── feed/             # Feed principal (Siguiendo / Para ti)
+│   │   ├── search/           # Búsqueda de usuarios
+│   │   ├── create-post/      # Crear publicación
+│   │   ├── events/           # Eventos e instalaciones
+│   │   ├── messages/         # Mensajería
+│   │   └── profile/          # Perfil propio y ajeno
+│   ├── admin/                # Panel de administración
+│   │   ├── publications/     # Gestión de publicaciones
+│   │   ├── users/            # Gestión de usuarios
+│   │   └── events/           # Gestión de eventos
+│   ├── auth/                 # Autenticación
+│   │   ├── login/
+│   │   ├── register/
+│   │   ├── create-profile-1/
+│   │   └── create-profile-2/
+│   ├── components/           # Componentes reutilizables
+│   ├── context/              # AuthContext
+│   └── page.tsx              # Landing page
+├── lib/
+│   └── socket.ts             # Singleton Socket.io
+└── public/
+    └── logo.png              # Logo oficial CELIX
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Instalación y desarrollo
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+```bash
+npm install
+npm run dev
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+La app estará disponible en `http://localhost:3000`.
 
-## Learn More
+## Variables de entorno
 
-To learn more about Next.js, take a look at the following resources:
+Crea un archivo `.env.local` en la raíz del frontend:
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+```env
+# URL base del backend (sin /api/v1 al final)
+NEXT_PUBLIC_API_URL=http://localhost:3001
+```
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+> En producción (Vercel) esta variable apunta a la URL de Railway.
 
-## Deploy on Vercel
+## Scripts disponibles
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+```bash
+npm run dev        # Servidor de desarrollo
+npm run build      # Build de producción
+npm run start      # Servidor de producción
+npm run lint       # Linter
+```
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+## Notas
+
+- Las imágenes de posts y avatares se suben directamente a **Cloudinary** desde el cliente. No requiere variables de entorno adicionales.
+- El acceso al panel `/admin` requiere que el usuario tenga `rol: "ADMIN"` en la base de datos. Este rol se asigna manualmente en MongoDB Atlas.
+- La autenticación persiste en `localStorage` con un token JWT de 7 días de expiración.

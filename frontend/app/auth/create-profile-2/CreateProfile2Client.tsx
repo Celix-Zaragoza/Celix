@@ -6,7 +6,7 @@ import { deportesDisponibles } from "../../data/mockData";
 import { toast } from "sonner";
 import { Check, ChevronDown, ChevronUp } from "lucide-react";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 const NIVELES = [
   { value: 1, label: "Principiante" },

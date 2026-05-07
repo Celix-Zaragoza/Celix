@@ -6,7 +6,7 @@ import { useAuth } from "../../context/AuthContext";
 import { Eye, EyeOff, Mail, Lock, AlertCircle } from "lucide-react"; // Añadido AlertCircle
 import { toast } from "sonner";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 export default function Page() {
   const [email, setEmail] = useState("");
@@ -73,10 +73,8 @@ export default function Page() {
           {/* ... (tu código de diseño permanece igual) ... */}
           <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(ellipse at 60% 60%, #13ec80 0%, transparent 70%)" }} />
           <div className="relative flex items-center gap-2 z-10">
-            <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#13ec80" }}>
-              <span className="text-lg font-black" style={{ color: "#0a1628" }}>⚡</span>
-            </div>
-            <span className="text-xl font-black tracking-widest" style={{ color: "#13ec80" }}>CELIX</span>
+            <img src="/logo.png" alt="CELIX" className="h-16 w-auto" />
+            <span className="text-4xl font-black tracking-widest" style={{ color: "#f1f5f9" }}>CELIX</span>
           </div>
           <div className="relative z-10">
             <p className="text-sm font-semibold mb-3 uppercase tracking-widest" style={{ color: "#13ec80" }}>Red social deportiva</p>
@@ -84,7 +82,7 @@ export default function Page() {
           </div>
           <div className="relative z-10 flex justify-center">
              <div className="w-56 h-56 rounded-full flex items-center justify-center" style={{ background: "radial-gradient(circle at 35% 35%, #b5651d, #3d1a00)", boxShadow: "0 0 60px rgba(19,236,128,0.15), inset 0 0 40px rgba(0,0,0,0.4)" }}>
-               <span style={{ fontSize: "7rem" }}>🏀</span>
+               <span style={{ fontSize: "10rem" }}>🏀</span>
              </div>
           </div>
           <button onClick={() => router.push("/")} className="relative z-10 text-sm self-start hover:underline" style={{ color: "rgba(148,163,184,0.6)" }}>← Volver al inicio</button>
@@ -152,7 +150,7 @@ export default function Page() {
                 opacity: loading ? 0.8 : 1,
               }}
             >
-              {loading ? "Iniciando sesión..." : <>Iniciar Sesión <span>→</span></>}
+              {loading ? "Iniciando sesión..." : <>Iniciar Sesión </>}
             </button>
 
             {/* Resto de links y footer - Sin cambios */}
@@ -161,6 +159,16 @@ export default function Page() {
               <button type="button" onClick={() => router.push("/auth/register")} className="font-semibold hover:underline" style={{ color: "#13ec80" }}>Regístrate</button>
             </p>
           </form>
+          {/* Volver al inicio — móvil */}
+          <div className="mt-6 text-center lg:hidden">
+            <button
+              onClick={() => router.push("/")}
+              className="text-sm hover:underline"
+              style={{ color: "rgba(148,163,184,0.6)" }}
+            >
+              ← Volver al inicio
+            </button>
+          </div>
         </div>
       </div>
     </div>

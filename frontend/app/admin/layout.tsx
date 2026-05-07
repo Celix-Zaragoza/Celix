@@ -37,7 +37,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     <div className="min-h-screen bg-[#0f172a]">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#0f172a] border-b border-[rgba(148,163,184,0.2)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-2 sm:px-3 lg:px-4">
           <div className="flex items-center justify-between h-16">
             <div className="flex items-center gap-4">
               <Button

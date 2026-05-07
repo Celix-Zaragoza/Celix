@@ -43,15 +43,16 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     <div className="min-h-screen bg-[#0f172a]">
       {/* Header */}
       <header className="sticky top-0 z-50 bg-[#0f172a] border-b border-[rgba(148,163,184,0.2)]">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="max-w-7xl mx-auto px-2 sm:px-3 lg:px-4">
           <div className="flex items-center justify-between h-16">
-            <div className="flex items-center">
-              <h1
-                className="text-2xl font-bold text-[#13ec80] cursor-pointer uppercase tracking-wide"
-                onClick={() => router.push("/app/feed")}
-              >
+            <div
+              className="flex items-center gap-2 cursor-pointer"
+              onClick={() => router.push("/app/feed")}
+            >
+              <img src="/logo.png" alt="CELIX" className="h-10 w-auto" />
+              <span className="text-2xl font-bold uppercase tracking-wide" style={{ color: "#f1f5f9" }}>
                 CELIX
-              </h1>
+              </span>
             </div>
 
             {/* Desktop Navigation */}

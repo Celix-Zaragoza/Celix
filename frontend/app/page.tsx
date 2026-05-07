@@ -248,8 +248,11 @@ export default function Page() {
           borderBottom: "1px solid rgba(19,236,128,0.1)",
         }}
       >
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <span className="text-2xl font-black tracking-widest" style={{ color: VERDE }}>CELIX</span>
+        <div className="max-w-7xl mx-auto px-2 sm:px-4 lg:px-6 py-4 flex items-center justify-between">
+          <div className="flex items-center gap-2 cursor-pointer" onClick={() => router.push("/")}>
+            <img src="/logo.png" alt="CELIX" className="h-10 w-auto" />
+            <span className="text-2xl font-black tracking-widest" style={{ color: TEXTO }}>CELIX</span>
+          </div>
           <nav className="hidden md:flex items-center gap-2">
             {["Características", "Eventos", "Comunidad"].map((item) => (
               <BtnGhost key={item} onClick={() => {}}>{item}</BtnGhost>
@@ -287,7 +290,7 @@ export default function Page() {
               </p>
               <div className="flex flex-col sm:flex-row gap-4 mb-12">
                 <BtnPrimary size="lg" onClick={() => router.push("/auth/register")}>
-                  Empieza gratis →
+                  Empieza gratis
                 </BtnPrimary>
                 <BtnOutline size="lg" onClick={() => router.push("/auth/login")}>
                   Iniciar sesión
@@ -408,12 +411,17 @@ export default function Page() {
                 <div className="w-56 h-96 rounded-3xl flex items-center justify-center relative overflow-hidden" style={{ backgroundColor: FONDO3, border: "2px solid rgba(19,236,128,0.3)", boxShadow: "0 0 60px rgba(19,236,128,0.15)" }}>
                   <div className="absolute top-0 left-0 right-0 h-8 rounded-t-3xl" style={{ backgroundColor: "rgba(19,236,128,0.1)" }} />
                   <div className="absolute top-2 left-1/2 -translate-x-1/2 w-16 h-1.5 rounded-full" style={{ backgroundColor: "rgba(19,236,128,0.4)" }} />
-                  <div className="text-center px-4">
-                    <p className="text-4xl font-black mb-2" style={{ color: VERDE }}>CELIX</p>
-                    <p className="text-xs" style={{ color: TEXTO_MUTED }}>Tu deporte, tu comunidad</p>
+                  <div className="text-center px-4 flex flex-col items-center gap-3">
+                    <div className="flex items-center gap-2">
+                      <img src="/logo.png" alt="CELIX" className="h-10 w-auto" />
+                      <p className="text-2xl font-black tracking-widest" style={{ color: TEXTO }}>CELIX</p>
+                    </div>
+                    <p className="text-xs" style={{ color: TEXTO_MUTED }}>Tu deporte, tu comunidad, tu ritmo</p>
                   </div>
-                  <div className="absolute bottom-6 left-4 right-4 py-3 rounded-xl text-center text-sm font-bold" style={{ backgroundColor: VERDE, color: "#0a1628" }}>
-                    Abrir app →
+                  <div className="absolute bottom-6 left-4 right-4 flex justify-center">
+                    <BtnPrimary onClick={() => router.push("/auth/register")} size="lg">
+                      Abrir app
+                    </BtnPrimary>
                   </div>
                 </div>
                 <div className="absolute -inset-4 rounded-3xl blur-2xl -z-10 opacity-20" style={{ backgroundColor: VERDE }} />
@@ -459,7 +467,10 @@ export default function Page() {
         <div className="max-w-7xl mx-auto">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-12">
             <div className="col-span-2 md:col-span-1">
-              <p className="text-2xl font-black tracking-widest mb-3" style={{ color: VERDE }}>CELIX</p>
+              <div className="flex items-center gap-2 mb-3">
+                <img src="/logo.png" alt="CELIX" className="h-10 w-auto" />
+                <p className="text-2xl font-black tracking-widest" style={{ color: TEXTO }}>CELIX</p>
+              </div>
               <p className="text-sm leading-relaxed" style={{ color: TEXTO_MUTED }}>La red social deportiva de Zaragoza. Tu deporte, tu comunidad, tu ritmo.</p>
             </div>
             {[

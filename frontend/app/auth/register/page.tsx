@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Eye, EyeOff, User, Mail, Lock, RefreshCw, AlertCircle } from "lucide-react";
 import { toast } from "sonner";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 // ── InputField con soporte para estados de error ─────────────────────────────
 function InputField({
@@ -127,10 +127,8 @@ export default function Page() {
       <div className="hidden lg:flex flex-col justify-between w-[45%] relative overflow-hidden p-10" style={{ backgroundColor: "#0f2318" }}>
         <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(ellipse at 60% 60%, #13ec80 0%, transparent 70%)" }} />
         <div className="relative flex items-center gap-2 z-10">
-          <div className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ backgroundColor: "#13ec80" }}>
-            <span className="text-lg font-black" style={{ color: "#0a1628" }}>⚡</span>
-          </div>
-          <span className="text-xl font-black tracking-widest" style={{ color: "#13ec80" }}>CELIX</span>
+          <img src="/logo.png" alt="CELIX" className="h-16 w-auto" />
+          <span className="text-4xl font-black tracking-widest" style={{ color: "#f1f5f9" }}>CELIX</span>
         </div>
 
         <div className="relative z-10">
@@ -144,10 +142,10 @@ export default function Page() {
 
         <div className="relative z-10 flex justify-center">
           <div className="w-56 h-56 rounded-full flex items-center justify-center" style={{ background: "radial-gradient(circle at 35% 35%, #b5651d, #3d1a00)", boxShadow: "0 0 60px rgba(19,236,128,0.15), inset 0 0 40px rgba(0,0,0,0.4)" }}>
-            <span style={{ fontSize: "7rem" }}>🏀</span>
+            <span style={{ fontSize: "10rem" }}>🏀</span>
           </div>
         </div>
-        <button onClick={() => router.push("/")} className="relative z-10 text-sm self-start hover:underline" style={{ color: "rgba(148,163,184,0.6)" }}>← Volver</button>
+        <button onClick={() => router.push("/")} className="relative z-10 text-sm self-start hover:underline" style={{ color: "rgba(148,163,184,0.6)" }}>← Volver al inicio</button>
       </div>
 
       {/* ── Panel derecho — Formulario ── */}
@@ -180,7 +178,7 @@ export default function Page() {
                 <InputField id="password" name="password" type="password" placeholder="••••••••" value={formData.password} onChange={handleChange} icon={Lock} toggle showToggle={showPassword} onToggle={() => setShowPassword((v) => !v)} hasError={!!error} />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>Confirmar</label>
+                <label className="block text-sm font-medium mb-1.5" style={{ color: "#f1f5f9" }}>Confirmar contraseña</label>
                 <InputField id="confirmPassword" name="confirmPassword" type="password" placeholder="••••••••" value={formData.confirmPassword} onChange={handleChange} icon={RefreshCw} toggle showToggle={showConfirmPassword} onToggle={() => setShowConfirmPassword((v) => !v)} hasError={!!error} />
               </div>
             </div>
@@ -203,7 +201,7 @@ export default function Page() {
                 opacity: loading ? 0.8 : 1,
               }}
             >
-              {loading ? "Creando cuenta..." : <>Crear cuenta <span>→</span></>}
+              {loading ? "Creando cuenta..." : <>Crear cuenta </>}
             </button>
 
             <p className="text-center text-sm pt-1" style={{ color: "#94a3b8" }}>
@@ -211,6 +209,16 @@ export default function Page() {
               <button type="button" onClick={() => router.push("/auth/login")} className="font-semibold hover:underline" style={{ color: "#13ec80" }}>Iniciar sesión</button>
             </p>
           </form>
+          {/* Volver al inicio — móvil */}
+          <div className="mt-6 text-center lg:hidden">
+            <button
+              onClick={() => router.push("/")}
+              className="text-sm hover:underline"
+              style={{ color: "rgba(148,163,184,0.6)" }}
+            >
+              ← Volver al inicio
+            </button>
+          </div>
         </div>
       </div>
     </div>

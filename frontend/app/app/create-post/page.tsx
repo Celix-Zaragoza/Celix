@@ -8,7 +8,7 @@ import { toast } from "sonner";
 import { ImageIcon, X } from "lucide-react";
 import { useAuth } from "../../context/AuthContext";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 export default function Page() {
   const router = useRouter();
@@ -303,7 +303,7 @@ export default function Page() {
                 opacity: loading ? 0.8 : 1,
               }}
             >
-              {loading ? "Publicando..." : "Publicar →"}
+              {loading ? "Publicando..." : "Publicar"}
             </button>
           </div>
         </form>

@@ -10,7 +10,7 @@ interface PublicationCardProps {
   publicacion: any;
 }
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 export const PublicationCard = ({ publicacion }: PublicationCardProps) => {
   const autor = publicacion.autor ?? {};
