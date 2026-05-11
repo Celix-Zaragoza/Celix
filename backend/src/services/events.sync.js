@@ -1,5 +1,6 @@
 // backend/src/services/events.sync.js
 import { Event } from "../models/Event.js";
+import { logger } from "../config/logger.js"; 
 
 const ZARAGOZA_EVENTS_URL = "https://www.zaragoza.es/sede/servicio/actividades/evento";
 const ZARAGOZA_BASE = "https://www.zaragoza.es";
@@ -84,7 +85,7 @@ async function fetchAllZaragozaEvents() {
 }
 
 export async function syncEvents() {
-  console.log("🔄 Sincronizando eventos con Zaragoza...");
+  logger.info("🔄 Sincronizando eventos con Zaragoza...");
   try {
     const rawEvents = await fetchAllZaragozaEvents();
     const normalized = rawEvents.map(normalizeEvent).filter((e) => e.externalId);
@@ -121,13 +122,13 @@ export async function syncEvents() {
     const deleted = await Event.deleteMany({
       externalId: { $nin: receivedIds }
     });
-    console.log(`🗑️ ${deleted.deletedCount} eventos eliminados (ya no existen en Zaragoza)`);
+    logger.info(`🗑️ ${deleted.deletedCount} eventos eliminados (ya no existen en Zaragoza)`);
     // ────────────────────────────────────────────────────────────────────────
 
-    console.log(`✅ Sync completado: ${upserted} eventos actualizados`);
+    logger.info(`✅ Sync completado: ${upserted} eventos actualizados`);
     return { ok: true, total: upserted };
   } catch (err) {
-    console.error("❌ Error en sync de eventos:", err.message);
+    logger.error("❌ Error en sync de eventos:", err.message);
     return { ok: false, error: err.message };
   }
 }

@@ -1,5 +1,6 @@
 import jwt from "jsonwebtoken";
 import { BlacklistedToken, User } from "../models/index.js";
+import { logger } from "../config/logger.js";
 
 function signToken(userId, rol) {
   return jwt.sign({ sub: userId.toString(), rol }, process.env.JWT_SECRET, { expiresIn: "7d" });
@@ -46,7 +47,7 @@ export const register = async (req, res, next) => {
 };
 
 export const update_profile = async (req, res, next) => {
-  console.log("update-profile", req.body);
+  logger.info("update-profile", req.body);
   try {
     const { userId, edad, zona, deportesNivel } = req.body;
 

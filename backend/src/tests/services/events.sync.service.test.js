@@ -1,4 +1,5 @@
 import { jest } from "@jest/globals";
+import { logger } from "../../config/logger.js";
 
 const eventFindOneAndUpdateMock = jest.fn();
 const eventDeleteManyMock = jest.fn();
@@ -7,6 +8,15 @@ jest.unstable_mockModule("../../models/Event.js", () => ({
   Event: {
     findOneAndUpdate: eventFindOneAndUpdateMock,
     deleteMany: eventDeleteManyMock,
+  },
+}));
+
+jest.unstable_mockModule("../../config/logger.js", () => ({
+  logger: {
+    info: jest.fn(),
+    error: jest.fn(),
+    warn: jest.fn(),
+    debug: jest.fn(),
   },
 }));
 
@@ -39,8 +49,8 @@ describe("servicio de sincronización de eventos", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    console.log = jest.fn();
-    console.error = jest.fn();
+    logger.info = jest.fn();
+    logger.error = jest.fn();
     global.fetch = jest.fn();
   });
 

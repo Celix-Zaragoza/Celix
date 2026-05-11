@@ -5,6 +5,7 @@ import app from "./app.js";
 import { connectDB } from "./config/db.js";
 import { initSocket } from "./socket/index.js";
 import { syncEvents } from "./services/events.sync.js";
+import { logger } from "./config/logger.js";
 
 const PORT = process.env.PORT ?? 3001;
 
@@ -18,13 +19,13 @@ async function main() {
   initSocket(httpServer);
 
   httpServer.listen(PORT, () => {
-    console.log(`🚀 CELIX API en http://localhost:${PORT}`);
-    console.log(`📚 Swagger en http://localhost:${PORT}/api-docs`);
-    console.log(`🔌 Socket.io activo`);
+    logger.info(`CELIX API en http://localhost:${PORT}`);
+    logger.info(`Swagger en http://localhost:${PORT}/api-docs`);
+    logger.info(`Socket.io activo`);
   });
 
   // Sync en background — no bloquea el arranque
-  syncEvents().catch(console.error);
+  syncEvents().catch((err) => logger.error("Error en sync de eventos:", err));
 }
 
 main();

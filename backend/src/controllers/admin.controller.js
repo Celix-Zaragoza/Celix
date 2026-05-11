@@ -7,6 +7,7 @@ import {
   sendUserBlockedEmail,
   sendUserUnblockedEmail,
 } from "../services/email.service.js";
+import { logger } from "../config/logger.js";
 
 // ── PUBLICACIONES ─────────────────────────────────────────────────────────────
 
@@ -59,7 +60,7 @@ export const hidePost = async (req, res, next) => {
         to: post.autor.email,
         nombre: post.autor.nombre,
         contenido: post.contenido,
-      }).catch(console.error);
+      }).catch(logger.error);
     }
     
     return res.json({ ok: true, post });
@@ -81,7 +82,7 @@ export const restorePost = async (req, res, next) => {
         to: post.autor.email,
         nombre: post.autor.nombre,
         contenido: post.contenido,
-      }).catch(console.error);
+      }).catch(logger.error);
     }
 
     return res.json({ ok: true, post });
@@ -165,10 +166,10 @@ export const blockUser = async (req, res, next) => {
         nombre: user.nombre,
         motivo: req.body?.motivo ?? "No especificado",
       }).catch(err => {
-        console.error("Error al enviar email de bloqueo:", err);
+        logger.error("Error al enviar email de bloqueo:", err);
       });
     } else {
-      console.warn("No se pudo enviar el email: Función no definida o usuario sin correo.");
+      logger.warn("No se pudo enviar el email: Función no definida o usuario sin correo.");
     }
 
     return res.json({ ok: true, user });
@@ -189,7 +190,7 @@ export const unblockUser = async (req, res, next) => {
       sendUserUnblockedEmail({
         to: user.email,
         nombre: user.nombre,
-      }).catch(console.error);
+      }).catch(logger.error);
     }
 
     return res.json({ ok: true, user });

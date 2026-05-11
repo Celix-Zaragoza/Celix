@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { logger } from "../config/logger.js";
 
 // Inicializar el cliente
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
@@ -7,7 +8,7 @@ const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
 export const reordenarFeedConIA = async (usuarioIntereses, postsCandidatos) => {
   try {
-    console.log("🧠 [Gemini Service] Enviando prompt a la IA...");
+    logger.info("🧠 [Gemini Service] Enviando prompt a la IA...");
 
     const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
@@ -66,18 +67,18 @@ export const reordenarFeedConIA = async (usuarioIntereses, postsCandidatos) => {
     });
 
     const responseText = result.response.text();
-    console.log("📥 [Gemini Service] Respuesta RAW de la IA:", responseText);
+    logger.info("📥 [Gemini Service] Respuesta RAW de la IA:", responseText);
 
     const data = JSON.parse(responseText);
 
     if (data.orden_ids) {
-      console.log("📊 [Gemini Service] Ranking completado con éxito");
+      logger.info("📊 [Gemini Service] Ranking completado con éxito");
       return data.orden_ids;
     }
 
     return null;
   } catch (error) {
-    console.error("Error en Re-ranking Gemini:", error);
+    logger.error("Error en Re-ranking Gemini:", error);
     return null; // Fallback: si falla, devolveremos el orden original de la DB
   }
 };

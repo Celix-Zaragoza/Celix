@@ -1,6 +1,7 @@
 // test-modelos.js
 //Fichero para saber que modelos de Gemini tengo disponibles con mi API Key, y cuáles sirven para generar contenido (generateContent)
 import dotenv from "dotenv";
+import { loggers } from "winston";
 dotenv.config();
 
 async function listarModelos() {
@@ -12,7 +13,7 @@ async function listarModelos() {
     const datos = await respuesta.json();
 
     if (datos.error) {
-      console.error("Error de la API:", datos.error.message);
+      loggers.error("Error de la API:", datos.error.message);
       return;
     }
 
@@ -21,10 +22,10 @@ async function listarModelos() {
       .filter((m) => m.supportedGenerationMethods.includes("generateContent"))
       .map((m) => m.name.replace("models/", "")); // Limpiamos el prefijo
 
-    console.log("✅ Modelos disponibles para tu API Key:");
-    console.table(modelosUtiles);
+    loggers.info("✅ Modelos disponibles para tu API Key:");
+    loggers.table(modelosUtiles);
   } catch (error) {
-    console.error("Error al conectar:", error);
+    loggers.error("Error al conectar:", error);
   }
 }
 

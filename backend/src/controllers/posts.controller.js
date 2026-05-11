@@ -1,3 +1,4 @@
+import { logger } from "../config/logger.js";
 import { Post, User } from "../models/index.js";
 import { reordenarFeedConIA} from "../services/geminiService.js";
 
@@ -112,7 +113,7 @@ export const getParaTiFeed = async (req, res, next) => {
     if (cacheFeedIA.has(userId)) {
       const { posts, timestamp } = cacheFeedIA.get(userId);
       if (ahora - timestamp < 5 * 60 * 1000) {
-        console.log("[IA Feed] Sirviendo desde Caché (Ahorrando API)");
+        logger.info("[IA Feed] Sirviendo desde Caché (Ahorrando API)");
         return res.json({ ok: true, posts, source: "cache" });
       }
     }
@@ -123,7 +124,7 @@ export const getParaTiFeed = async (req, res, next) => {
       .limit(40)
       .populate("autor", "alias nombre avatar zona");
 
-    console.log(` [IA Feed] Posts candidatos encontrados: ${postsCandidatos.length}`);
+    logger.info(` [IA Feed] Posts candidatos encontrados: ${postsCandidatos.length}`);
 
     // Extraemos los intereses del usuario (deportes y niveles)
     const misIntereses = req.user.deportesNivel.map(d => ({
@@ -131,20 +132,20 @@ export const getParaTiFeed = async (req, res, next) => {
       nivel: d.nivel
     }));
 
-    console.log(` [IA Feed] Intereses del usuario:`, JSON.stringify(misIntereses));
+    logger.info(` [IA Feed] Intereses del usuario:`, JSON.stringify(misIntereses));
 
     // Pedimos a Gemini que los ordene según afinidad real
     const ordenIds = await reordenarFeedConIA(misIntereses, postsCandidatos);
 
     let postsFinales;
     if (ordenIds && Array.isArray(ordenIds)) {
-      console.log(` [IA Feed] Gemini ha devuelto un orden de ${ordenIds.length} IDs`);
+      logger.info(` [IA Feed] Gemini ha devuelto un orden de ${ordenIds.length} IDs`);
       // Reordenamos nuestro array original basándonos en el orden de IDs que dictó la IA
       postsFinales = ordenIds
         .map(id => postsCandidatos.find(p => p._id.toString() === id))
         .filter(p => p !== undefined); // Por si acaso algún ID no coincide
     } else {
-      console.warn(`[IA Feed] Gemini falló. Usando orden cronológico por defecto.`);
+      logger.warn(`[IA Feed] Gemini falló. Usando orden cronológico por defecto.`);
       // Si la IA falla, devolvemos el orden por fecha como fallback
       postsFinales = postsCandidatos;
     }

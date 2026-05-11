@@ -2,6 +2,7 @@
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import { Conversation, Message } from "../models/Conversation.js";
+import { logger } from "../config/logger.js";
 
 export function initSocket(httpServer) {
   const io = new Server(httpServer, {
@@ -28,7 +29,7 @@ export function initSocket(httpServer) {
 
   // ── Conexión ─────────────────────────────────────────────────────────────
   io.on("connection", (socket) => {
-    console.log(`🟢 Socket conectado: ${socket.userId}`);
+    logger.info(`🟢 Socket conectado: ${socket.userId}`);
 
     // El cliente se une a su sala personal (para recibir notificaciones)
     socket.join(`user:${socket.userId}`);
@@ -108,7 +109,7 @@ export function initSocket(httpServer) {
           }
         });
       } catch (err) {
-        console.error("Error en message:send:", err);
+        logger.error("Error en message:send:", err);
         socket.emit("error", "Error al enviar el mensaje");
       }
     });
@@ -132,13 +133,13 @@ export function initSocket(httpServer) {
           { $set: { leido: true } }
         );
       } catch (err) {
-        console.error("Error en conversation:read:", err);
+        logger.error("Error en conversation:read:", err);
       }
     });
 
     // ── Desconexión ────────────────────────────────────────────────────────
     socket.on("disconnect", () => {
-      console.log(`🔴 Socket desconectado: ${socket.userId}`);
+      logger.info(`🔴 Socket desconectado: ${socket.userId}`);
     });
   });
 
