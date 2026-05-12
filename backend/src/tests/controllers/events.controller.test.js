@@ -1,3 +1,10 @@
+/**
+ * @file events.controller.test.js
+ * @description Tests unitarios del controlador de eventos deportivos.
+ * Comprueba la consulta paginada de eventos desde la base de datos
+ * con sus distintos filtros.
+ */
+
 import { jest } from "@jest/globals";
 
 const eventFindMock = jest.fn();

@@ -1,3 +1,8 @@
+/**
+ * @file events.routes.js
+ * @description Rutas para la consulta de eventos deportivos públicos de Zaragoza.
+ */
+
 import { Router } from "express";
 import { getSportsEvents } from "../../controllers/events.controller.js";
 

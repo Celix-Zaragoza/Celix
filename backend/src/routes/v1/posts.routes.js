@@ -1,3 +1,9 @@
+/**
+ * @file posts.routes.js
+ * @description Rutas para la gestión de publicaciones: feed global, feed de seguidos,
+ * posts por usuario, creación, eliminación y likes.
+ */
+
 import { Router } from "express";
 import {
   getPosts, 

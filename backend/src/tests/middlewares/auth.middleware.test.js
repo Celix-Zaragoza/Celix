@@ -1,3 +1,10 @@
+/**
+ * @file auth.middleware.test.js
+ * @description Tests unitarios del middleware de autenticación.
+ * Comprueba el comportamiento de requireAuth ante tokens ausentes, invalidados,
+ * expirados, inválidos y válidos, así como el control de acceso por rol de requireRole.
+ */
+
 import { jest } from "@jest/globals";
 
 const jwtVerifyMock = jest.fn();

@@ -1,3 +1,10 @@
+/**
+ * @file auth.controller.test.js
+ * @description Tests unitarios del controlador de autenticación.
+ * Comprueba el registro, actualización de perfil, inicio de sesión
+ * y cierre de sesión, incluyendo los casos de error de cada flujo.
+ */
+
 import { jest } from "@jest/globals";
 import { logger } from "../../config/logger.js";
 

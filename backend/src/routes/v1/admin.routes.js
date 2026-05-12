@@ -1,3 +1,9 @@
+/**
+ * @file admin.routes.js
+ * @description Rutas de administración para la moderación de publicaciones,
+ * usuarios y eventos. Todas requieren autenticación y rol ADMIN.
+ */
+
 import { Router } from "express";
 import { requireAuth, requireRole } from "../../middlewares/auth.middleware.js";
 import { triggerSync } from "../../controllers/events.controller.js";
@@ -295,6 +301,20 @@ router.patch("/events/:id/hide", hideEvent);
  */
 router.patch("/events/:id/restore", restoreEvent);
 
+/**
+ * @swagger
+ * /api/v1/admin/events/sync:
+ *   post:
+ *     summary: Forzar sincronización manual de eventos con la API de Zaragoza
+ *     tags: [Admin]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Sincronización completada correctamente
+ *       500:
+ *         description: Error durante la sincronización
+ */
 router.post("/events/sync", triggerSync);
 
 export default router;

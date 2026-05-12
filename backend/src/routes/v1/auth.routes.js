@@ -1,3 +1,9 @@
+/**
+ * @file auth.routes.js
+ * @description Rutas de autenticación: registro, inicio de sesión,
+ * consulta del usuario autenticado y cierre de sesión.
+ */
+
 import { Router } from "express";
 import { login, register, getAuthMe, logout } from "../../controllers/auth.controller.js";
 import { requireAuth } from "../../middlewares/auth.middleware.js";

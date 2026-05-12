@@ -1,3 +1,10 @@
+/**
+ * @file events.sync.service.test.js
+ * @description Tests unitarios del servicio de sincronización de eventos.
+ * Comprueba el flujo de normalización, upsert en base de datos, eliminación
+ * de eventos obsoletos, reintentos ante respuestas vacías y manejo de errores de la API.
+ */
+
 import { jest } from "@jest/globals";
 import { logger } from "../../config/logger.js";
 

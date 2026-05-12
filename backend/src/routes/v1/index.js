@@ -1,3 +1,8 @@
+/**
+ * @file index.js
+ * @description Agrega y monta todas las rutas de la API bajo sus respectivos prefijos.
+ */
+
 import { Router } from "express";
 import authRouter from "./auth.routes.js";
 import usersRouter from "./users.routes.js";

@@ -1,4 +1,9 @@
-// backend/src/index.js
+/**
+ * @file index.js
+ * @description Punto de entrada de la aplicación. Conecta la base de datos,
+ * crea el servidor HTTP, arranca Socket.io y lanza la sincronización de eventos en background.
+ */
+
 import "dotenv/config";
 import { createServer } from "http";
 import app from "./app.js";
@@ -9,6 +14,11 @@ import { logger } from "./config/logger.js";
 
 const PORT = process.env.PORT ?? 3001;
 
+/**
+ * Inicializa y arranca el servidor: conecta la base de datos, crea el servidor HTTP,
+ * configura Socket.io, comienza a escuchar peticiones y lanza la sincronización
+ * de eventos en background.
+ */
 async function main() {
   await connectDB();
 

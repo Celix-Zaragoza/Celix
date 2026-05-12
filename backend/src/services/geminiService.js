@@ -1,11 +1,24 @@
+/**
+ * @file geminiService.js
+ * @description Servicio de integración con la API de Google Gemini.
+ * Proporciona reordenación inteligente del feed mediante IA generativa
+ * en función de los intereses deportivos del usuario.
+ */
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
 import { logger } from "../config/logger.js";
 
 // Inicializar el cliente
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// services/geminiService.js
-
+/**
+ * Reordena una lista de posts usando IA para maximizar la relevancia
+ * según los deportes e intereses del usuario.
+ * @param {object[]} usuarioIntereses - Lista de deportes y niveles del usuario.
+ * @param {object[]} postsCandidatos - Lista de posts candidatos a reordenar.
+ * @returns {Promise<string[]|null>} Array de IDs de posts en el orden recomendado,
+ * o null si la IA falla (en cuyo caso se usa el orden original).
+ */
 export const reordenarFeedConIA = async (usuarioIntereses, postsCandidatos) => {
   try {
     logger.info("🧠 [Gemini Service] Enviando prompt a la IA...");

@@ -1,3 +1,10 @@
+/**
+ * @file BlacklistedToken.js
+ * @description Modelo para la blacklist de tokens JWT invalidados.
+ * Almacena el hash del token y su fecha de expiración; MongoDB los elimina
+ * automáticamente mediante un índice TTL cuando el token expira.
+ */
+
 import mongoose from "mongoose";
 
 const blacklistedTokenSchema = new mongoose.Schema(

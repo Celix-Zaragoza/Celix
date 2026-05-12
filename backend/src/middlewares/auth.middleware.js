@@ -1,7 +1,20 @@
+/**
+ * @file auth.middleware.js
+ * @description Middlewares de autenticación y autorización.
+ * Verifica tokens JWT, comprueba la blacklist y controla el acceso por rol.
+ */
+
 import jwt from "jsonwebtoken";
 import crypto from "crypto";
 import { BlacklistedToken, User } from "../models/index.js";
 
+/**
+ * Verifica que la petición incluye un token JWT válido, no invalidado y perteneciente
+ * a un usuario activo. Si todo es correcto, adjunta el usuario a req.user.
+ * @param {import("express").Request} req
+ * @param {import("express").Response} res
+ * @param {import("express").NextFunction} next
+ */
 export const requireAuth = async (req, res, next) => {
   try {
     // Comprueba que existe un token dentro de la petición del cliente
@@ -44,6 +57,11 @@ export const requireAuth = async (req, res, next) => {
   }
 };
 
+/**
+ * Verifica que el usuario autenticado tiene alguno de los roles requeridos.
+ * @param {...string} roles - Roles permitidos para acceder a la ruta.
+ * @returns {import("express").RequestHandler} Middleware de autorización por rol.
+ */
 export const requireRole = (...roles) => (req, res, next) => {
   if (!req.user) return res.status(401).json({ ok: false, message: "No autenticado" });
   if (!roles.includes(req.user.rol))

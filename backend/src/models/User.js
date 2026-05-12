@@ -1,8 +1,17 @@
+/**
+ * @file User.js
+ * @description Modelo de usuario. Define el esquema de Mongoose con los datos
+ * del perfil, relaciones sociales, control de acceso y métodos de autenticación.
+ */
+
 import mongoose from "mongoose";
 import bcrypt from "bcrypt";
 
 const SALT_ROUNDS = 12;
 
+/**
+ * Subschema que representa un deporte practicado por el usuario y su nivel asociado.
+ */
 const deporteNivelSchema = new mongoose.Schema(
   {
     deporte: { type: String, required: true, trim: true },
@@ -55,15 +64,24 @@ const userSchema = new mongoose.Schema(
   }
 );
 
+// Virtuals para obtener el número de seguidores y seguidos sin almacenarlos en BD
 userSchema.virtual("numSeguidores").get(function () { return this.seguidores?.length ?? 0; });
 userSchema.virtual("numSiguiendo").get(function () { return this.siguiendo?.length ?? 0; });
 
+/**
+ * Hook pre-save que hashea la contraseña antes de guardarla si ha sido modificada.
+ */
 userSchema.pre("save", async function () {
   if (!this.isModified("password")) return;
   const salt = await bcrypt.genSalt(SALT_ROUNDS);
   this.password = await bcrypt.hash(this.password, salt);
 });
 
+/**
+ * Compara una contraseña en texto plano con el hash almacenado.
+ * @param {string} candidate - Contraseña en texto plano a verificar.
+ * @returns {Promise<boolean>} true si la contraseña es correcta, false en caso contrario.
+ */
 userSchema.methods.comparePassword = async function (candidate) {
   try {
     return await bcrypt.compare(candidate, this.password);
@@ -72,6 +90,7 @@ userSchema.methods.comparePassword = async function (candidate) {
   }
 };
 
+// Índice de texto para búsqueda por alias y nombre
 userSchema.index({ alias: "text", nombre: "text" });
 
 export const User = mongoose.model("User", userSchema);

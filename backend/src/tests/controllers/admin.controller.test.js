@@ -1,3 +1,10 @@
+/**
+ * @file admin.controller.test.js
+ * @description Tests unitarios del controlador de administración.
+ * Comprueba la moderación de publicaciones, gestión de usuarios
+ * y moderación de eventos.
+ */
+
 import { jest } from "@jest/globals";
 
 const postFindMock = jest.fn();

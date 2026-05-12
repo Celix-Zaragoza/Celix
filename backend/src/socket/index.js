@@ -1,9 +1,19 @@
-// backend/src/socket/index.js
+/**
+ * @file socket/index.js
+ * @description Configuración e inicialización de Socket.io. Gestiona la autenticación
+ * de conexiones y los eventos de mensajería en tiempo real entre usuarios.
+ */
 import { Server } from "socket.io";
 import jwt from "jsonwebtoken";
 import { Conversation, Message } from "../models/Conversation.js";
 import { logger } from "../config/logger.js";
 
+/**
+ * Inicializa el servidor de Socket.io, configura el middleware de autenticación
+ * y registra los eventos de conversación y mensajería en tiempo real.
+ * @param httpServer - Servidor HTTP al que se adjunta Socket.io.
+ * @returns Instancia de Socket.io.
+ */
 export function initSocket(httpServer) {
   const io = new Server(httpServer, {
     cors: {

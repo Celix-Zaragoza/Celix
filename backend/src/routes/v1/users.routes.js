@@ -1,3 +1,9 @@
+/**
+ * @file users.routes.js
+ * @description Rutas para la gestión de usuarios: perfil propio, perfil público,
+ * búsqueda, seguir/dejar de seguir, seguidores y seguidos.
+ */
+
 import { Router } from "express";
 import {
   getMe, updateMe, getUserById,

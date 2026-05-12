@@ -1,3 +1,9 @@
+/**
+ * @file email.service.js
+ * @description Configuración del transporte de correo y funciones para el envío
+ * de notificaciones por email a los usuarios.
+ */
+
 import nodemailer from "nodemailer";
 
 const transporter = nodemailer.createTransport({
@@ -8,6 +14,12 @@ const transporter = nodemailer.createTransport({
   },
 });
 
+/**
+ * Envía un email al usuario notificándole que su publicación ha sido ocultada.
+ * @param {string} to - Dirección de email del destinatario.
+ * @param {string} nombre - Nombre del usuario.
+ * @param {string} contenido - Contenido de la publicación ocultada.
+ */
 export async function sendPostHiddenEmail({ to, nombre, contenido }) {
   await transporter.sendMail({
     from: `"CELIX" <${process.env.EMAIL_USER}>`,
@@ -28,6 +40,12 @@ export async function sendPostHiddenEmail({ to, nombre, contenido }) {
   });
 }
 
+/**
+ * Envía un email al usuario notificándole que su publicación ha sido restaurada.
+ * @param {string} to - Dirección de email del destinatario.
+ * @param {string} nombre - Nombre del usuario.
+ * @param {string} contenido - Contenido de la publicación restaurada.
+ */
 export async function sendPostRestoredEmail({ to, nombre, contenido }) {
   await transporter.sendMail({
     from: `"CELIX" <${process.env.EMAIL_USER}>`,
@@ -47,6 +65,12 @@ export async function sendPostRestoredEmail({ to, nombre, contenido }) {
   });
 }
 
+/**
+ * Envía un email al usuario notificándole que su cuenta ha sido bloqueada.
+ * @param {string} to - Dirección de email del destinatario.
+ * @param {string} nombre - Nombre del usuario.
+ * @param {string} motivo - Motivo del bloqueo (opcional).
+ */
 export async function sendUserBlockedEmail({ to, nombre, motivo }) {
   await transporter.sendMail({
     from: `"CELIX" <${process.env.EMAIL_USER}>`,
@@ -66,6 +90,11 @@ export async function sendUserBlockedEmail({ to, nombre, motivo }) {
   });
 }
 
+/**
+ * Envía un email al usuario notificándole que su cuenta ha sido desbloqueada.
+ * @param {string} to - Dirección de email del destinatario.
+ * @param {string} nombre - Nombre del usuario.
+ */
 export async function sendUserUnblockedEmail({ to, nombre }) {
   await transporter.sendMail({
     from: `"CELIX" <${process.env.EMAIL_USER}>`,
