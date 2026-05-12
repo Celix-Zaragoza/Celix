@@ -1,3 +1,9 @@
+/**
+ * Archivo: app/page.tsx (Landing Page)
+ * Descripción: Punto de entrada público de CELIX. 
+ * Presenta la propuesta de valor, características, proceso de registro y FAQ.
+ * Utiliza un diseño mobile-first y una paleta de colores "Dark Sport".
+ */
 "use client";
 
 import { useState } from "react";
@@ -6,7 +12,7 @@ import {
   Activity, Calendar, MapPin, TrendingUp,
   MessageCircle, ChevronDown, Star, Zap, Shield,
 } from "lucide-react";
-
+// ── Configuración Estética ──────────────────────────────────────────────────
 const VERDE = "#13ec80";
 const VERDE_DARK = "#10d671";
 const FONDO = "#0a1628";
@@ -14,7 +20,7 @@ const FONDO2 = "#0f1f35";
 const FONDO3 = "#132030";
 const TEXTO = "#f1f5f9";
 const TEXTO_MUTED = "#94a3b8";
-
+// ── Configuración Estética ──────────────────────────────────────────────────
 const faqs = [
   {
     q: "¿Es CELIX gratuito para los usuarios?",
@@ -86,7 +92,9 @@ const features = [
 ];
 
 // ── Componentes reutilizables ──────────────────────────────────────────────────
-
+/**
+ * Acordeón para la sección de preguntas frecuentes.
+ */
 function FaqItem({ q, a }: { q: string; a: string }) {
   const [open, setOpen] = useState(false);
   return (
@@ -111,7 +119,9 @@ function FaqItem({ q, a }: { q: string; a: string }) {
     </div>
   );
 }
-
+/**
+ * Distintos Botones con estados de hover personalizados y sombras reactivas.
+ */
 function BtnPrimary({ children, onClick, size = "md" }: { children: React.ReactNode; onClick: () => void; size?: "md" | "lg" }) {
   const [hover, setHover] = useState(false);
   const pad = size === "lg" ? "px-8 py-4 text-base" : "px-5 py-2.5 text-sm";
@@ -191,7 +201,9 @@ function BtnDark({ children, onClick }: { children: React.ReactNode; onClick: ()
     </button>
   );
 }
-
+/**
+ * Tarjetas de características con estados de hover personalizados y sombras reactivas.
+ */
 function FeatureCard({ f }: { f: typeof features[0] }) {
   const [hover, setHover] = useState(false);
   return (

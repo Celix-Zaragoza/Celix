@@ -1,3 +1,8 @@
+/**
+ * Archivo: frontend/app/app/following/page.tsx
+ * Descripción: Página que muestra a los usuarios que sigues y permite dejar de seguirlos.
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -10,6 +15,9 @@ import { toast } from "sonner";
 
 type MockUsuario = (typeof mockUsuarios)[number];
 
+/**
+ * Componente de página de /app/following que lista usuarios seguidos.
+ */
 export default function Page() {
   const [searchQuery, setSearchQuery] = useState("");
   const [siguiendo, setSiguiendo] = useState<MockUsuario[]>(mockUsuarios.slice(1, 5));
@@ -23,11 +31,17 @@ export default function Page() {
       )
     : siguiendo;
 
+  /**
+   * Elimina a un usuario de la lista de seguimiento.
+   */
   const handleDejarDeSeguir = (usuarioId: string | number) => {
     setSiguiendo((prev) => prev.filter((u) => String(u.id) !== String(usuarioId)));
     toast.success("Dejaste de seguir al usuario");
   };
 
+  /**
+   * Navega al perfil público del usuario seleccionado en seguimiento.
+   */
   const goProfile = (id: string | number) => router.push(`/app/profile/${id}`);
 
   return (

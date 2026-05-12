@@ -1,3 +1,9 @@
+/**
+ * Archivo: frontend/app/app/events/page.tsx
+ * Descripción: Página principal de eventos e instalaciones en la aplicación Celix.
+ *              Incluye búsqueda, filtros, vista de mapa y paginación.
+ */
+
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -46,6 +52,10 @@ interface Pagination {
   total: number;
 }
 
+/**
+ * Formatea una fecha al formato largo en español.
+ * @param dateStr Fecha en formato ISO o nula
+ */
 function formatFecha(dateStr: string | null): string {
   if (!dateStr) return "Fecha no disponible";
   try {
@@ -55,11 +65,17 @@ function formatFecha(dateStr: string | null): string {
   }
 }
 
+/**
+ * Genera estilos dinámicos para botones de paginación.
+ */
 const btnPage = (active: boolean) => ({
   backgroundColor: active ? "#13ec80" : "transparent",
   color: active ? "#102219" : "#94a3b8",
 } as React.CSSProperties);
 
+/**
+ * Componente de página de /app/events que muestra eventos e instalaciones.
+ */
 export default function Page() {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, pages: 1, total: 0 });
@@ -75,6 +91,9 @@ export default function Page() {
   const [loadingInstalaciones, setLoadingInstalaciones] = useState(false);
   const [currentPageInstalaciones, setCurrentPageInstalaciones] = useState(1);
 
+  /**
+   * Recupera los eventos desde el backend con los filtros y la página actual.
+   */
   const fetchEventos = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -104,6 +123,10 @@ export default function Page() {
 
   useEffect(() => {
     if (activeTab !== "instalaciones" || instalaciones.length > 0) return;
+
+    /**
+     * Recupera las instalaciones deportivas desde el backend la primera vez que se muestra la pestaña.
+     */
     const fetchInstalaciones = async () => {
       setLoadingInstalaciones(true);
       try {

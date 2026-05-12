@@ -1,3 +1,9 @@
+/**
+ * Archivo: /admin/layout.tsx
+ * Descripción: Layout del panel de administración de Celix.
+ *              Controla la navegación del admin y el acceso a rutas protegidas.
+ */
+
 "use client";
 
 import { useEffect } from "react";
@@ -20,6 +26,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (!isAuthenticated || !user?.isAdmin) return null;
 
+  /**
+   * Cierra la sesión del usuario y redirige a la página principal.
+   */
   const handleLogout = () => {
     logout();
     router.push("/");
@@ -31,8 +40,14 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     { icon: Calendar, label: "Eventos", path: "/admin/events" },
   ];
 
+  /**
+   * Comprueba si la ruta actual coincide con el enlace de navegación.
+   */
   const isActive = (path: string) => pathname === path || pathname?.startsWith(path);
 
+  /**
+   * Componente de layout que renderiza la interfaz de administración.
+   */
   return (
     <div className="min-h-screen bg-[#0f172a]">
       {/* Header */}

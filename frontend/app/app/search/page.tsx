@@ -1,3 +1,8 @@
+/**
+ * Archivo: frontend/app/search/page.tsx
+ * Descripción: Página de búsqueda de usuarios que permite filtrar deportistas por nombre, alias o deporte.
+ */
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -23,12 +28,20 @@ type Usuario = {
   zona: string;
 };
 
+/**
+ * Componente principal de la página de búsqueda. 
+ * Implementa un sistema de búsqueda con debounce para optimizar las peticiones a la API.
+ */
 export default function Page() {
   const [searchQuery, setSearchQuery] = useState("");
   const [usuarios, setUsuarios] = useState<Usuario[]>([]);
   const router = useRouter();
   const token = typeof window !== "undefined" ? localStorage.getItem("token") : null;
 
+  /**
+   * Effect que gestiona el debounce de la búsqueda. 
+   * Espera 400ms después de que el usuario deja de escribir para realizar la petición.
+   */
   useEffect(() => {
     const delayDebounce = setTimeout(() => {
       if (searchQuery.trim() === "") {
@@ -41,6 +54,9 @@ export default function Page() {
     return () => clearTimeout(delayDebounce);
   }, [searchQuery]);
 
+  /**
+   * Realiza la llamada al backend para obtener los usuarios que coincidan con la consulta.
+   */
   const fetchUsuarios = async (query: string) => {
     try {
       const res = await fetch(`${API}/api/v1/users/search?q=${query}`, {
@@ -55,6 +71,9 @@ export default function Page() {
     }
   };
 
+  /**
+   * Redirige al usuario a la página de perfil público del deportista seleccionado.
+   */
   const goProfile = (id: string | number) => router.push(`/app/profile/${id}`);
 
   return (

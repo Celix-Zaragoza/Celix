@@ -1,3 +1,9 @@
+/**
+ * Archivo: frontend/app/layout.tsx (o componente MainLayout)
+ * Descripción: Layout principal de la aplicación que gestiona la navegación, 
+ * la protección de rutas autenticadas y la estructura visual (Header y Navbar móvil).
+ */
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,12 +13,19 @@ import { Home, Search, PlusSquare, MessageCircle, User, Calendar, LogOut, Shield
 import { Button } from "../components/ui/button";
 import { ConfirmModal } from "../components/ConfirmModal";
 
+/**
+ * Componente Wrapper que envuelve las páginas de la aplicación.
+ * Controla el acceso de usuarios no autenticados y provee la interfaz de navegación común.
+ */
 export default function MainLayout({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, logout, user } = useAuth();
   const router = useRouter();
   const pathname = usePathname();
   const [showLogoutModal, setShowLogoutModal] = useState(false);
 
+  /**
+   * Efecto de seguridad: Redirige al login si el usuario no está autenticado.
+   */
   useEffect(() => {
     if (!isAuthenticated) {
       router.replace("/auth/login");
@@ -21,6 +34,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
 
   if (!isAuthenticated) return null;
 
+  /**
+   * Realiza el cierre de sesión eliminando el token local y actualizando el contexto.
+   */
   const confirmLogout = () => {
     delete localStorage.token;
     logout();
@@ -36,6 +52,9 @@ export default function MainLayout({ children }: { children: React.ReactNode }) 
     { icon: User, label: "Perfil", path: "/app/profile" },
   ];
 
+  /**
+   * Determina si una ruta de navegación está activa basándose en el pathname actual.
+   */
   const isActive = (path: string) =>
     pathname === path || (path !== "/app/feed" && pathname?.startsWith(path));
 

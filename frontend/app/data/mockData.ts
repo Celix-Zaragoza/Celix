@@ -1,3 +1,11 @@
+/**
+ * Archivo: data/mockData.ts
+ * Descripción: Definición de esquemas de datos (interfaces) y datos de ejemplo (mocks).
+ * Proporciona el contenido inicial para publicaciones, eventos, instalaciones y mensajería
+ * basado en la geografía y deportes de Zaragoza.
+ */
+
+// ── Interfaces de Dominio ──────────────────────────────────────────────────
 export interface Publicacion {
   id: string;
   usuarioId: string;
@@ -62,6 +70,8 @@ export interface Conversacion {
   noLeidos: number;
 }
 
+// ── Interfaces de Dominio ──────────────────────────────────────────────────
+
 export const deportesDisponibles = [
   'Fútbol',
   'Baloncesto',
@@ -90,6 +100,7 @@ export const zonasZaragoza = [
   'Valdefierro'
 ];
 
+// ── Datos de Ejemplo (Mocks) ───────────────────────────────────────────────
 export const mockUsuarios = [
   {
     id: '2',

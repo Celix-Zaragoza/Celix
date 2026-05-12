@@ -1,3 +1,9 @@
+/**
+ * Archivo: /admin/users/page.tsx
+ * Descripción: Página de administración de usuarios para el panel de Celix.
+ *              Permite buscar, filtrar, bloquear y desbloquear usuarios.
+ */
+
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -27,6 +33,9 @@ interface Pagination {
   total: number;
 }
 
+/**
+ * Genera las cabeceras HTTP estándar para las peticiones autenticadas.
+ */
 function authHeaders() {
   return {
     "Content-Type": "application/json",
@@ -65,8 +74,14 @@ export default function Page() {
     onConfirm: () => void;
   } | null>(null);
 
+  /**
+   * Cierra el modal de confirmación y limpia los datos asociados.
+   */
   const closeModal = () => setModal(null);
 
+  /**
+   * Recupera la lista de usuarios del backend según los filtros y la página actual.
+   */
   const fetchUsuarios = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -91,6 +106,9 @@ export default function Page() {
   useEffect(() => { fetchUsuarios(); }, [fetchUsuarios]);
   useEffect(() => { setPage(1); }, [searchQuery, filterStatus]);
 
+  /**
+   * Muestra el modal de confirmación para bloquear a un usuario.
+   */
   const handleBlock = (id: string) => {
     const usuario = usuarios.find((u) => u.id === id);
     if (usuario?.rol === "ADMIN") {
@@ -115,6 +133,9 @@ export default function Page() {
     });
   };
 
+  /**
+   * Muestra el modal de confirmación para desbloquear a un usuario.
+   */
   const handleUnblock = (id: string) => {
     setModal({
       open: true,
@@ -134,6 +155,9 @@ export default function Page() {
     });
   };
 
+  /**
+   * Componente de página que renderiza la vista de administración de usuarios.
+   */
   return (
     <div>
       {/* Header */}

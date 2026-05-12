@@ -1,3 +1,8 @@
+/**
+ * Archivo: frontend/app/app/messages/page.tsx
+ * Descripción: Página principal de conversaciones del usuario en Celix.
+ */
+
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -31,10 +36,16 @@ interface UsuarioBusqueda {
   avatar?: string;
 }
 
+/**
+ * Devuelve el participante opuesto en una conversación para mostrar su información.
+ */
 function getOtherParticipant(conv: Conversacion, myId: string): Participante {
   return conv.participantes.find((p) => p.id !== myId) ?? conv.participantes[0];
 }
 
+/**
+ * Componente de página de /app/messages que gestiona la lista de conversaciones.
+ */
 export default function Page() {
   const router = useRouter();
   const { user } = useAuth();
@@ -48,6 +59,9 @@ export default function Page() {
   const [userResults, setUserResults] = useState<UsuarioBusqueda[]>([]);
   const [searchingUsers, setSearchingUsers] = useState(false);
 
+  /**
+   * Recupera las conversaciones del usuario para mostrarlas en la bandeja de mensajes.
+   */
   const fetchConversaciones = useCallback(async () => {
     try {
       const res = await fetch(`${API}/api/v1/conversations`, {
@@ -80,6 +94,9 @@ export default function Page() {
 
   useEffect(() => {
     if (!userSearch.trim()) { setUserResults([]); return; }
+    /**
+     * Busca usuarios por texto para iniciar una nueva conversación.
+     */
     const timer = setTimeout(async () => {
       setSearchingUsers(true);
       try {
@@ -98,6 +115,9 @@ export default function Page() {
     return () => clearTimeout(timer);
   }, [userSearch]);
 
+  /**
+   * Crea o abre una conversación con el usuario seleccionado.
+   */
   const handleStartConversation = async (userId: string) => {
     try {
       const res = await fetch(`${API}/api/v1/conversations`, {

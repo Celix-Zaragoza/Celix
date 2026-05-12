@@ -1,3 +1,9 @@
+/**
+ * Archivo: auth/register/page.tsx
+ * Descripción: Página de registro de nuevos usuarios. Gestiona la creación de cuenta,
+ * validaciones básicas y la redirección al flujo de creación de perfil deportivo.
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -7,14 +13,16 @@ import { toast } from "sonner";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
-// ── InputField con soporte para estados de error ─────────────────────────────
+/**
+ * Componente auxiliar para campos de entrada con soporte visual para errores y toggles de visibilidad.
+ */
 function InputField({
   id, name, type, placeholder, value, onChange, icon: Icon, toggle, showToggle, onToggle, hasError
 }: {
   id: string; name: string; type: string; placeholder: string; value: string;
   onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   icon: React.ElementType; toggle?: boolean; showToggle?: boolean; onToggle?: () => void;
-  hasError?: boolean; // Nueva prop
+  hasError?: boolean;
 }) {
   return (
     <div className="relative">
@@ -50,6 +58,9 @@ function InputField({
   );
 }
 
+/**
+ * Página principal de registro.
+ */
 export default function Page() {
   const [formData, setFormData] = useState({
     nombre: "",
@@ -61,20 +72,25 @@ export default function Page() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null); // Estado para capturar errores
+  const [error, setError] = useState<string | null>(null);
 
   const router = useRouter();
 
+  /**
+   * Actualiza el estado del formulario y limpia mensajes de error previos.
+   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
-    if (error) setError(null); // Limpiamos el error al escribir
+    if (error) setError(null);
   };
 
+  /**
+   * Maneja el envío del formulario al backend y redirige al primer paso del perfil.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
-    // Validaciones básicas de cliente antes de ir al servidor
     if (formData.password !== formData.confirmPassword) {
       setError("Las contraseñas no coinciden");
       toast.error("Las contraseñas no coinciden");
@@ -108,7 +124,6 @@ export default function Page() {
         
         router.push(`/auth/create-profile-1?${qs}`);
       } else {
-        // Aquí capturamos el mensaje que arreglamos en el backend (Zod o errores de DB)
         const errorMsg = data.message || "Error al crear la cuenta";
         setError(errorMsg);
         toast.error(errorMsg);
@@ -123,7 +138,7 @@ export default function Page() {
 
   return (
     <div className="min-h-screen flex" style={{ backgroundColor: "#0d1f16" }}>
-      {/* ── Panel izquierdo (desktop) - Sin cambios visuales significativos ── */}
+      {/* ── Panel izquierdo (desktop) ── */}
       <div className="hidden lg:flex flex-col justify-between w-[45%] relative overflow-hidden p-10" style={{ backgroundColor: "#0f2318" }}>
         <div className="absolute inset-0 opacity-20" style={{ background: "radial-gradient(ellipse at 60% 60%, #13ec80 0%, transparent 70%)" }} />
         <div className="relative flex items-center gap-2 z-10">
@@ -183,7 +198,6 @@ export default function Page() {
               </div>
             </div>
 
-            {/* ── Alerta de Error Dinámica ── */}
             {error && (
               <div className="flex items-center gap-2 p-3 rounded-lg bg-red-500/10 border border-red-500/50 text-red-400 text-xs animate-in fade-in slide-in-from-top-1">
                 <AlertCircle className="w-4 h-4 shrink-0" />
@@ -209,7 +223,7 @@ export default function Page() {
               <button type="button" onClick={() => router.push("/auth/login")} className="font-semibold hover:underline" style={{ color: "#13ec80" }}>Iniciar sesión</button>
             </p>
           </form>
-          {/* Volver al inicio — móvil */}
+          
           <div className="mt-6 text-center lg:hidden">
             <button
               onClick={() => router.push("/")}

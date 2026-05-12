@@ -1,9 +1,17 @@
+/**
+ * Archivo: not-found.tsx (Raíz)
+ * Descripción: Página de error 404 personalizada.
+ * Se renderiza automáticamente cuando Next.js no encuentra una ruta coincidente.
+ */
 "use client";
 
 import { useRouter } from "next/navigation";
 import { Button } from "./components/ui/button";
 import { Home } from "lucide-react";
-
+/**
+ * Componente NotFound: Proporciona una interfaz amigable cuando el usuario
+ * accede a una URL rota o inexistente, permitiendo el retorno rápido al inicio.
+ */
 export default function NotFound() {
   const router = useRouter();
 

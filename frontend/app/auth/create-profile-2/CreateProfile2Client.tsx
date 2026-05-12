@@ -1,3 +1,8 @@
+/**
+ * Archivo: auth/create-profile-2/page.tsx
+ * Descripción: Segundo paso del registro de usuario donde se seleccionan deportes y niveles de habilidad.
+ */
+
 "use client";
 
 import { useMemo, useState } from "react";
@@ -16,10 +21,16 @@ const NIVELES = [
   { value: 5, label: "Experto" },
 ];
 
+/**
+ * Componente principal para la gestión del paso 2 de la creación de perfil.
+ */
 export default function CreateProfile2Client() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  /**
+   * Recupera y memoriza los datos del usuario provenientes de la URL (paso anterior).
+   */
   const userData = useMemo(() => {
     const nombre = searchParams.get("nombre") ?? "";
     const email = searchParams.get("email") ?? "";
@@ -36,6 +47,9 @@ export default function CreateProfile2Client() {
 
   const deportesSeleccionados = Object.keys(deportesNivel);
 
+  /**
+   * Alterna la selección de un deporte y despliega las opciones de nivel si se activa.
+   */
   const toggleDeporte = (deporte: string) => {
     setDeportesNivel((prev) => {
       if (prev[deporte] !== undefined) {
@@ -49,10 +63,16 @@ export default function CreateProfile2Client() {
     });
   };
 
+  /**
+   * Asigna un nivel específico (1-5) a un deporte previamente seleccionado.
+   */
   const setNivel = (deporte: string, nivel: number) => {
     setDeportesNivel((prev) => ({ ...prev, [deporte]: nivel }));
   };
 
+  /**
+   * Envía la información final del perfil al servidor para completar el registro.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -97,6 +117,9 @@ export default function CreateProfile2Client() {
     }
   };
 
+  /**
+   * Redirige al usuario al paso 1 manteniendo los datos actuales en la URL.
+   */
   const handleBack = () => {
     const qs = new URLSearchParams({
       nombre: userData.nombre ?? "",

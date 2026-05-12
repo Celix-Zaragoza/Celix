@@ -1,3 +1,8 @@
+/**
+ * Archivo: frontend/app/app/feed-siguiendo/page.tsx
+ * Descripción: Página de feed que muestra publicaciones de las personas que sigues.
+ */
+
 "use client";
 
 import { useRouter } from "next/navigation";
@@ -5,6 +10,9 @@ import { PublicationCard } from "../../components/PublicationCard";
 import { mockPublicaciones } from "../../data/mockData";
 import { Users } from "lucide-react";
 
+/**
+ * Componente de página de /app/feed-siguiendo que lista publicaciones de seguimiento.
+ */
 export default function Page() {
   const router = useRouter();
 

@@ -1,3 +1,8 @@
+/**
+ * Archivo: frontend/app/app/followers/page.tsx
+ * Descripción: Página que muestra los seguidores del usuario y permite buscar entre ellos.
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -10,6 +15,9 @@ import { toast } from "sonner";
 
 type MockUsuario = (typeof mockUsuarios)[number];
 
+/**
+ * Componente de página de /app/followers que lista los seguidores del usuario.
+ */
 export default function Page() {
   const [searchQuery, setSearchQuery] = useState("");
   const [seguidores] = useState(mockUsuarios.slice(0, 4));
@@ -23,10 +31,16 @@ export default function Page() {
       )
     : seguidores;
 
+  /**
+   * Simula el seguimiento de un usuario y muestra una notificación.
+   */
   const handleSeguir = (usuario: MockUsuario) => {
     toast.success(`Ahora sigues a ${usuario.nombre}`);
   };
 
+  /**
+   * Navega al perfil público del usuario seleccionado.
+   */
   const goProfile = (id: string | number) => router.push(`/app/profile/${id}`);
 
   return (

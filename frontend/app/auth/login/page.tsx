@@ -1,3 +1,9 @@
+/**
+ * Archivo: auth/login/page.tsx
+ * Descripción: Página de inicio de sesión de la aplicación. Maneja la autenticación,
+ * gestión de tokens y redirección al feed principal.
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -8,6 +14,9 @@ import { toast } from "sonner";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+/**
+ * Componente de página que renderiza el formulario de login y gestiona la lógica de acceso.
+ */
 export default function Page() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -18,6 +27,10 @@ export default function Page() {
   const { login } = useAuth();
   const router = useRouter();
 
+  /**
+   * Procesa el envío del formulario, valida credenciales contra la API y 
+   * establece la sesión del usuario.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null); // Limpiar errores previos

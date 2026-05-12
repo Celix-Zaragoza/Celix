@@ -1,3 +1,9 @@
+/**
+ * Archivo: frontend/app/app/create-post/page.tsx
+ * Descripción: Vista para crear una nueva publicación deportiva.
+ *              Gestiona formulario, subida de imagen y envío al backend.
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -10,6 +16,9 @@ import { useAuth } from "../../context/AuthContext";
 
 const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+/**
+ * Componente de página de /app/create-post que renderiza el formulario de creación de publicaciones.
+ */
 export default function Page() {
   const router = useRouter();
   const { user } = useAuth();
@@ -23,10 +32,18 @@ export default function Page() {
   const [loading, setLoading] = useState(false);
   const [file, setFile] = useState<File | null>(null);
 
+  /**
+   * Maneja el cambio de valores en el formulario de creación de publicación.
+   * @param field Campo que se actualiza
+   * @param value Valor nuevo del campo
+   */
   const handleChange = (field: string, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  /**
+   * Procesa la selección de imagen y genera una vista previa local.
+   */
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
     if (!selectedFile) return;
@@ -36,6 +53,10 @@ export default function Page() {
     reader.readAsDataURL(selectedFile);
   };
 
+  /**
+   * Sube la imagen seleccionada a Cloudinary y retorna la URL segura.
+   * @param file Archivo de imagen seleccionado por el usuario
+   */
   const uploadImage = async (file: File) => {
     const formData = new FormData();
     formData.append("file", file);
