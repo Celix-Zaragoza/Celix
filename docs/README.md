@@ -182,8 +182,15 @@ Se han implementado tests E2E con Playwright que se ejecutan en Chromium, Firefo
 | Login incorrecto | Credenciales erróneas muestran mensaje de error | PASS |
 | Registro correcto | Usuario rellena formulario y llega a crear perfil | PASS |
 | Registro con contraseñas distintas | Muestra error de validación | PASS |
+| Crear publicación | Usuario logueado crea una publicación y llega al feed | PASS |
+
+Para ejecutar los tests E2E es necesario tener el backend corriendo en una terminal separada:
 
 ```bash
+# Terminal 1 — arrancar el backend
+cd backend && npm run dev
+
+# Terminal 2 — ejecutar los tests E2E (arranca el frontend automáticamente)
 cd frontend && npm run e2e
 ```
 
@@ -250,4 +257,54 @@ El resultado es una aplicación funcional y desplegada que cubre los requisitos 
 
 ## Arranque en local
 
-Ver [README.md](../README.md) en la raíz del repositorio para instrucciones completas de instalación y configuración.
+## Arranque en local
+
+### Requisitos previos
+- Node.js 18+
+- npm 9+
+- Cuenta en MongoDB Atlas (o MongoDB local)
+
+### 1. Clonar el repositorio
+```bash
+git clone https://github.com/Celix-Zaragoza/Celix.git
+cd Celix
+```
+
+### 2. Configurar el backend
+```bash
+cd backend
+npm install
+```
+
+Crea un archivo `.env` en `backend/` con:
+```env
+PORT=3001
+NODE_ENV=development
+MONGO_URI="mongodb+srv://db_user:7naQrKIpHjYzgzSC@celix.dz9bsth.mongodb.net/celix?appName=Celix"
+JWT_SECRET=celix_super_secreto_2026
+EMAIL_USER=875301@unizar.es
+EMAIL_PASS=dsup jjko pjbd hbdc
+GEMINI_API_KEY=AIzaSyC9yf1XKmUPb4sO0QV5dpUk7UL34CrwuaQ
+FRONTEND_URL=http://localhost:3000
+```
+
+```bash
+npm run dev
+```
+
+### 3. Configurar el frontend
+```bash
+cd frontend
+npm install
+```
+
+Crea un archivo `.env.local` en `frontend/` con:
+```env
+NEXT_PUBLIC_API_URL=http://localhost:3001
+```
+
+```bash
+npm run dev
+```
+
+La app estará disponible en `http://localhost:3000` y la API en `http://localhost:3001`.
