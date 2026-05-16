@@ -1,3 +1,10 @@
+/**
+ * @file users.controller.test.js
+ * @description Tests unitarios del controlador de usuarios.
+ * Comprueba la actualización de perfil, consulta de perfiles, seguimiento
+ * entre usuarios, listado de seguidores/seguidos y búsqueda de usuarios.
+ */
+
 import { jest } from "@jest/globals";
 
 const userFindOneMock = jest.fn();

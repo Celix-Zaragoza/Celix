@@ -1,3 +1,9 @@
+/**
+ * Archivo: /admin/publications/page.tsx
+ * Descripción: Página de administración de publicaciones del panel de admin de Celix.
+ *              Permite buscar, filtrar, ocultar, restaurar y eliminar publicaciones.
+ */
+
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -33,6 +39,9 @@ interface Pagination {
   total: number;
 }
 
+/**
+ * Genera las cabeceras HTTP necesarias para las peticiones autenticadas al backend.
+ */
 function authHeaders() {
   return {
     "Content-Type": "application/json",
@@ -70,8 +79,15 @@ export default function Page() {
     danger: boolean;
     onConfirm: () => void;
   } | null>(null);
+
+  /**
+   * Cierra el modal de confirmación y limpia su estado.
+   */
   const closeModal = () => setModal(null);
 
+  /**
+   * Obtiene la lista de publicaciones desde el backend según los filtros y la página actual.
+   */
   const fetchPosts = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -96,6 +112,9 @@ export default function Page() {
   useEffect(() => { fetchPosts(); }, [fetchPosts]);
   useEffect(() => { setPage(1); }, [searchQuery, filterStatus]);
 
+  /**
+   * Muestra el modal de confirmación para ocultar una publicación.
+   */
   const handleHide = (id: string) => {
     setModal({
       open: true,
@@ -115,6 +134,9 @@ export default function Page() {
     });
   };
 
+  /**
+   * Muestra el modal de confirmación para restaurar una publicación oculta.
+   */
   const handleRestore = (id: string) => {
     setModal({
       open: true,
@@ -134,6 +156,9 @@ export default function Page() {
     });
   };
 
+  /**
+   * Muestra el modal de confirmación para eliminar permanentemente una publicación.
+   */
   const handleDelete = (id: string) => {
     setModal({
       open: true,
@@ -153,6 +178,9 @@ export default function Page() {
     });
   };
 
+  /**
+   * Componente de página que renderiza la vista de administración de publicaciones.
+   */
   return (
     <div>
       {/* Header */}

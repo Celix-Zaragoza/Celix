@@ -1,4 +1,12 @@
+/**
+ * @file auth.controller.test.js
+ * @description Tests unitarios del controlador de autenticación.
+ * Comprueba el registro, actualización de perfil, inicio de sesión
+ * y cierre de sesión, incluyendo los casos de error de cada flujo.
+ */
+
 import { jest } from "@jest/globals";
+import { logger } from "../../config/logger.js";
 
 const jwtSignMock = jest.fn();
 const userFindOneMock = jest.fn();
@@ -42,7 +50,8 @@ describe("controlador de autenticación", () => {
 
   beforeEach(() => {
     jest.clearAllMocks();
-    console.log = jest.fn();
+    logger.info = jest.fn();
+    logger.error = jest.fn();
     process.env.JWT_SECRET = "test-secret";
   });
 

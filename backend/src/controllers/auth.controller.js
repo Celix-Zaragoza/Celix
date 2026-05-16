@@ -1,10 +1,28 @@
+/**
+ * @file auth.controller.js
+ * @description Controlador de autenticación. Gestiona el registro, inicio de sesión,
+ * consulta del usuario autenticado, actualización de perfil y cierre de sesión.
+ */
+
 import jwt from "jsonwebtoken";
 import { BlacklistedToken, User } from "../models/index.js";
+import { logger } from "../config/logger.js";
 
+/**
+ * Genera un token JWT firmado con el ID y rol del usuario, con expiración de 7 días.
+ * @param {string|object} userId - ID del usuario.
+ * @param {string} rol - Rol del usuario.
+ * @returns {string} Token JWT firmado.
+ */
 function signToken(userId, rol) {
   return jwt.sign({ sub: userId.toString(), rol }, process.env.JWT_SECRET, { expiresIn: "7d" });
 }
 
+/**
+ * Devuelve el formato público del usuario autenticado, omitiendo datos sensibles.
+ * @param {object} user - Documento de usuario de Mongoose.
+ * @returns {object} Datos públicos del usuario.
+ */
 function userPublic(user) {
   return {
     id: user._id,
@@ -23,6 +41,11 @@ function userPublic(user) {
   };
 }
 
+/**
+ * Registra un nuevo usuario. Verifica que el email y el alias no estén en uso
+ * y devuelve un token JWT junto con los datos del usuario creado.
+ * @route POST /auth/register
+ */
 export const register = async (req, res, next) => {
   try {
     const { nombre, email, password, alias } = req.body;
@@ -45,8 +68,13 @@ export const register = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+/**
+ * Actualiza los datos de perfil de un usuario (edad, zona y deportes).
+ * Marca el perfil como completo si tiene todos los campos obligatorios.
+ * @route PATCH /auth/update-profile
+ */
 export const update_profile = async (req, res, next) => {
-  console.log("update-profile", req.body);
+  logger.info("update-profile", req.body);
   try {
     const { userId, edad, zona, deportesNivel } = req.body;
 
@@ -69,6 +97,11 @@ export const update_profile = async (req, res, next) => {
   }
 };
 
+/**
+ * Inicia sesión verificando las credenciales del usuario y devuelve un token JWT.
+ * Rechaza el acceso si la cuenta está bloqueada.
+ * @route POST /auth/login
+ */
 export const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
@@ -83,10 +116,18 @@ export const login = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+/**
+ * Devuelve los datos del usuario autenticado a partir del token JWT.
+ * @route GET /auth/me
+ */
 export const getAuthMe = (req, res) => {
   return res.json({ ok: true, user: userPublic(req.user) });
 };
 
+/**
+ * Cierra la sesión añadiendo el token actual a la blacklist para invalidarlo.
+ * @route POST /auth/logout
+ */
 export const logout = async (req, res, next) => {
   try {
     const tokenHash = req.authTokenHash;

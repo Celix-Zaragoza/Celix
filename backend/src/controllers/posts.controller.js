@@ -1,7 +1,19 @@
+/**
+ * @file posts.controller.js
+ * @description Controlador de publicaciones. Gestiona los feeds, creación,
+ * eliminación, likes y el feed personalizado con reordenación por IA.
+ */
+
+import { logger } from "../config/logger.js";
 import { Post, User } from "../models/index.js";
 import { reordenarFeedConIA} from "../services/geminiService.js";
 
-/** Añade al post si el usuario autenticado ya dio like */
+/**
+ * Añade al post si el usuario autenticado ya dio like y el número total de likes.
+ * @param {object} post - Documento de post de Mongoose.
+ * @param {string|object} userId - ID del usuario autenticado.
+ * @returns {object} Post con los campos hasLiked y numLikes añadidos.
+ */
 function postPublic(post, userId) {
   const obj = post.toJSON ? post.toJSON() : post;
   return {
@@ -13,8 +25,10 @@ function postPublic(post, userId) {
   };
 }
 
-// ── GET /posts  (feed global paginado) ────────────────────────────────────────
-
+/**
+ * Devuelve el feed global paginado, filtrable por deporte.
+ * @route GET /posts
+ */
 export const getPosts = async (req, res, next) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -43,8 +57,10 @@ export const getPosts = async (req, res, next) => {
   }
 };
 
-// ── GET /posts/following  (feed de usuarios seguidos) ─────────────────────────
-
+/**
+ * Devuelve el feed paginado de publicaciones de los usuarios que sigue el usuario autenticado.
+ * @route GET /posts/following
+ */
 export const getFollowingFeed = async (req, res, next) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -75,9 +91,10 @@ export const getFollowingFeed = async (req, res, next) => {
   }
 };
 
-// ── POST /posts ───────────────────────────────────────────────────────────────
-
-
+/**
+ * Crea una nueva publicación para el usuario autenticado.
+ * @route POST /posts
+ */
 export const createPost = async (req, res, next) => {
   try {
     const { contenido, deporte, ubicacion, tipo, imagen } = req.body;
@@ -100,8 +117,15 @@ export const createPost = async (req, res, next) => {
   }
 };
 
+// Caché en memoria del feed personalizado por usuario (TTL de 5 minutos)
 const cacheFeedIA = new Map();
 
+/**
+ * Devuelve el feed personalizado "Para ti" reordenado por IA según los intereses
+ * deportivos del usuario. Usa caché en memoria con TTL de 5 minutos para
+ * reducir llamadas a la API de Gemini. Si la IA falla, devuelve orden cronológico.
+ * @route GET /posts/para-ti
+ */
 export const getParaTiFeed = async (req, res, next) => {
   try {
     
@@ -112,7 +136,7 @@ export const getParaTiFeed = async (req, res, next) => {
     if (cacheFeedIA.has(userId)) {
       const { posts, timestamp } = cacheFeedIA.get(userId);
       if (ahora - timestamp < 5 * 60 * 1000) {
-        console.log("[IA Feed] Sirviendo desde Caché (Ahorrando API)");
+        logger.info("[IA Feed] Sirviendo desde Caché (Ahorrando API)");
         return res.json({ ok: true, posts, source: "cache" });
       }
     }
@@ -123,7 +147,7 @@ export const getParaTiFeed = async (req, res, next) => {
       .limit(40)
       .populate("autor", "alias nombre avatar zona");
 
-    console.log(` [IA Feed] Posts candidatos encontrados: ${postsCandidatos.length}`);
+    logger.info(` [IA Feed] Posts candidatos encontrados: ${postsCandidatos.length}`);
 
     // Extraemos los intereses del usuario (deportes y niveles)
     const misIntereses = req.user.deportesNivel.map(d => ({
@@ -131,20 +155,20 @@ export const getParaTiFeed = async (req, res, next) => {
       nivel: d.nivel
     }));
 
-    console.log(` [IA Feed] Intereses del usuario:`, JSON.stringify(misIntereses));
+    logger.info(` [IA Feed] Intereses del usuario:`, JSON.stringify(misIntereses));
 
     // Pedimos a Gemini que los ordene según afinidad real
     const ordenIds = await reordenarFeedConIA(misIntereses, postsCandidatos);
 
     let postsFinales;
     if (ordenIds && Array.isArray(ordenIds)) {
-      console.log(` [IA Feed] Gemini ha devuelto un orden de ${ordenIds.length} IDs`);
+      logger.info(` [IA Feed] Gemini ha devuelto un orden de ${ordenIds.length} IDs`);
       // Reordenamos nuestro array original basándonos en el orden de IDs que dictó la IA
       postsFinales = ordenIds
         .map(id => postsCandidatos.find(p => p._id.toString() === id))
         .filter(p => p !== undefined); // Por si acaso algún ID no coincide
     } else {
-      console.warn(`[IA Feed] Gemini falló. Usando orden cronológico por defecto.`);
+      logger.warn(`[IA Feed] Gemini falló. Usando orden cronológico por defecto.`);
       // Si la IA falla, devolvemos el orden por fecha como fallback
       postsFinales = postsCandidatos;
     }
@@ -171,8 +195,10 @@ export const getParaTiFeed = async (req, res, next) => {
   }
 };
 
-// ── DELETE /posts/:id ─────────────────────────────────────────────────────────
-
+/**
+ * Elimina lógicamente una publicación (marca eliminado=true). Solo el autor puede eliminarla.
+ * @route DELETE /posts/:id
+ */
 export const deletePost = async (req, res, next) => {
   try {
     const post = await Post.findById(req.params.id);
@@ -193,8 +219,10 @@ export const deletePost = async (req, res, next) => {
   }
 };
 
-// ── POST /posts/:id/like ──────────────────────────────────────────────────────
-
+/**
+ * Añade un like del usuario autenticado a una publicación.
+ * @route POST /posts/:id/like
+ */
 export const likePost = async (req, res, next) => {
   try {
     const post = await Post.findOne({ _id: req.params.id, oculto: false, eliminado: false });
@@ -214,8 +242,10 @@ export const likePost = async (req, res, next) => {
   }
 };
 
-// ── DELETE /posts/:id/like ────────────────────────────────────────────────────
-
+/**
+ * Elimina el like del usuario autenticado de una publicación.
+ * @route DELETE /posts/:id/like
+ */
 export const unlikePost = async (req, res, next) => {
   try {
     const post = await Post.findOne({ _id: req.params.id, oculto: false, eliminado: false });
@@ -230,8 +260,10 @@ export const unlikePost = async (req, res, next) => {
   }
 };
 
-// ── GET /posts/user/:id  (posts de un usuario concreto) ───────────────────────
-
+/**
+ * Devuelve las publicaciones paginadas de un usuario concreto.
+ * @route GET /posts/user/:id
+ */
 export const getPostsByUser = async (req, res, next) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);

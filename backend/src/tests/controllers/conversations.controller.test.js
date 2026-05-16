@@ -1,3 +1,10 @@
+/**
+ * @file conversations.controller.test.js
+ * @description Tests unitarios del controlador de conversaciones.
+ * Comprueba el listado paginado, consulta de mensajes, envío de mensajes
+ * y creación o recuperación de conversaciones entre usuarios.
+ */
+
 import { jest } from "@jest/globals";
 
 const conversationFindMock = jest.fn();

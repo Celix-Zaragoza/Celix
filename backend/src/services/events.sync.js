@@ -1,9 +1,21 @@
-// backend/src/services/events.sync.js
+/**
+ * @file events.sync.js
+ * @description Sincronización de eventos deportivos desde la API pública de Zaragoza.
+ * Obtiene todos los eventos, los normaliza y los guarda en la base de datos,
+ * eliminando los que ya no existen en la fuente original.
+ */
+
 import { Event } from "../models/Event.js";
+import { logger } from "../config/logger.js"; 
 
 const ZARAGOZA_EVENTS_URL = "https://www.zaragoza.es/sede/servicio/actividades/evento";
 const ZARAGOZA_BASE = "https://www.zaragoza.es";
 
+/**
+ * Normaliza una URL de imagen al formato absoluto con protocolo https.
+ * @param {string|null} url - URL de la imagen a normalizar.
+ * @returns {string|null} URL normalizada o null si no es válida.
+ */
 function normalizeImageUrl(url) {
   if (!url) return null;
   if (url.startsWith("//")) return `https:${url}`;
@@ -12,6 +24,11 @@ function normalizeImageUrl(url) {
   return null;
 }
 
+/**
+ * Transforma un evento crudo de la API de Zaragoza al formato del modelo de la base de datos.
+ * @param {object} event - Evento en formato original de la API de Zaragoza.
+ * @returns {object} Evento normalizado.
+ */
 function normalizeEvent(event) {
   const firstPrice = Array.isArray(event.price) ? event.price[0] : null;
   const firstOrganizer = Array.isArray(event.organizer) ? event.organizer[0] : null;
@@ -39,6 +56,11 @@ function normalizeEvent(event) {
   };
 }
 
+/**
+ * Obtiene todos los eventos deportivos de la API de Zaragoza paginando internamente
+ * hasta recuperar el total de resultados. Incluye reintentos y timeout de 30 segundos.
+ * @returns {Promise<object[]>} Lista completa de eventos en formato original.
+ */
 async function fetchAllZaragozaEvents() {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 30_000);
@@ -83,8 +105,13 @@ async function fetchAllZaragozaEvents() {
   }
 }
 
+/**
+ * Sincroniza los eventos deportivos de Zaragoza con la base de datos.
+ * Inserta o actualiza los eventos recibidos y elimina los que ya no existen en la fuente.
+ * @returns {Promise<{ok: boolean, total?: number, error?: string}>} Resultado de la sincronización.
+ */
 export async function syncEvents() {
-  console.log("🔄 Sincronizando eventos con Zaragoza...");
+  logger.info("🔄 Sincronizando eventos con Zaragoza...");
   try {
     const rawEvents = await fetchAllZaragozaEvents();
     const normalized = rawEvents.map(normalizeEvent).filter((e) => e.externalId);
@@ -121,13 +148,13 @@ export async function syncEvents() {
     const deleted = await Event.deleteMany({
       externalId: { $nin: receivedIds }
     });
-    console.log(`🗑️ ${deleted.deletedCount} eventos eliminados (ya no existen en Zaragoza)`);
+    logger.info(`🗑️ ${deleted.deletedCount} eventos eliminados (ya no existen en Zaragoza)`);
     // ────────────────────────────────────────────────────────────────────────
 
-    console.log(`✅ Sync completado: ${upserted} eventos actualizados`);
+    logger.info(`✅ Sync completado: ${upserted} eventos actualizados`);
     return { ok: true, total: upserted };
   } catch (err) {
-    console.error("❌ Error en sync de eventos:", err.message);
+    logger.error("❌ Error en sync de eventos:", err.message);
     return { ok: false, error: err.message };
   }
 }

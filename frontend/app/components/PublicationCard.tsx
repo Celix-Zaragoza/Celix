@@ -1,3 +1,10 @@
+/**
+ * Archivo: components/PublicationCard.tsx
+ * Descripción: Tarjeta de visualización para publicaciones/posts.
+ * Incluye gestión de autoría, visualización de medios, sistema de "likes" con 
+ * actualización optimista y modal de imagen ampliada.
+ */
+
 "use client";
 
 import { useState, useEffect } from "react";
@@ -10,9 +17,10 @@ interface PublicationCardProps {
   publicacion: any;
 }
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 export const PublicationCard = ({ publicacion }: PublicationCardProps) => {
+  // ── Normalización de datos del autor ──────────────────────────────────────
   const autor = publicacion.autor ?? {};
   const nombre = autor.nombre ?? publicacion.usuarioNombre ?? "Usuario";
   const alias = autor.alias ?? publicacion.usuarioAlias ?? "";
@@ -24,6 +32,7 @@ export const PublicationCard = ({ publicacion }: PublicationCardProps) => {
   const fecha = publicacion.createdAt ?? publicacion.fecha;
   const postId = publicacion._id ?? publicacion.id;
 
+  // ── Estados locales ────────────────────────────────────────────────────────
   const initialHasLiked: boolean = publicacion.hasLiked ?? false;
   const initialLikes: number =
     publicacion.numLikes ?? publicacion.likes?.length ?? publicacion.likes ?? 0;
@@ -33,16 +42,24 @@ export const PublicationCard = ({ publicacion }: PublicationCardProps) => {
   const [selectedImage, setSelectedImage] = useState<string | null>(null);
   const router = useRouter();
 
+  /**
+   * Bloquea el scroll del body cuando una imagen está en modo pantalla completa.
+   */
   useEffect(() => {
     document.body.style.overflow = selectedImage ? "hidden" : "auto";
   }, [selectedImage]);
 
+  /**
+   * Maneja la interacción de "Like". 
+   * Implementa una actualización optimista para mejorar la experiencia de usuario.
+   */
   const handleLike = async () => {
     if (!postId) return;
     const token = localStorage.getItem("token");
     if (!token) return;
 
     const wasLiked = liked;
+    // Actualización inmediata en UI
     setLiked(!wasLiked);
     setLikes((prev) => (wasLiked ? prev - 1 : prev + 1));
 
@@ -51,6 +68,8 @@ export const PublicationCard = ({ publicacion }: PublicationCardProps) => {
         method: wasLiked ? "DELETE" : "POST",
         headers: { Authorization: `Bearer ${token}` },
       });
+      
+      // Si la API falla, revertimos el estado visual
       if (!res.ok) {
         setLiked(wasLiked);
         setLikes((prev) => (wasLiked ? prev + 1 : prev - 1));

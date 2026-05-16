@@ -1,5 +1,15 @@
+/**
+ * @file conversations.controller.js
+ * @description Controlador de conversaciones y mensajes privados entre usuarios.
+ * Gestiona el listado de conversaciones, mensajes, envío y creación de conversaciones.
+ */
+
 import { Conversation, Message } from "../models/Conversation.js";
 
+/**
+ * Devuelve las conversaciones paginadas del usuario autenticado, ordenadas por actividad reciente.
+ * @route GET /conversations
+ */
 export const listConversations = async (req, res, next) => {
   
     const page = Math.max(1, Number.parseInt(req.query.page, 10) || 1);
@@ -29,6 +39,10 @@ export const listConversations = async (req, res, next) => {
   }
 };
 
+/**
+ * Devuelve los mensajes de una conversación, ordenados del más reciente al más antiguo.
+ * @route GET /conversations/:conversationId/messages
+ */
 export const listConversationMessages = async (req, res, next) => {
   
   const { conversationId } = req.params; 
@@ -57,6 +71,10 @@ export const listConversationMessages = async (req, res, next) => {
   }
 };
 
+/**
+ * Envía un mensaje en una conversación y actualiza el contador de no leídos de cada participante.
+ * @route POST /conversations/:conversationId/messages
+ */
 export const sendConversationMessage = async (req, res, next) => {
   try {
     const { conversationId } = req.params;
@@ -101,6 +119,10 @@ export const sendConversationMessage = async (req, res, next) => {
   }
 };
 
+/**
+ * Devuelve una conversación existente entre dos usuarios o la crea si no existe.
+ * @route POST /conversations
+ */
 export const createOrGetConversation = async (req, res, next) => {
   try {
     const { participanteId } = req.body;

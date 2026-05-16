@@ -1,3 +1,8 @@
+/**
+ * Archivo: frontend/app/app/profile/edit/page.tsx
+ * Descripción: Página para editar el perfil de usuario, incluyendo avatar y deportes.
+ */
+
 "use client";
 
 import { useMemo, useState } from "react";
@@ -8,7 +13,7 @@ import { deportesDisponibles, zonasZaragoza } from "../../../data/mockData";
 import { toast } from "sonner";
 import { Check, ChevronDown, ChevronUp, X, Camera } from "lucide-react";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 const NIVELES = [
   { value: 1, label: "Principiante" },
@@ -40,6 +45,9 @@ const selectWrap: React.CSSProperties = {
   overflow: "hidden",
 };
 
+/**
+ * Componente de página de /app/profile/edit que maneja la edición del perfil del usuario.
+ */
 export default function Page() {
   const { user, updateUser } = useAuth();
   const router = useRouter();
@@ -69,6 +77,9 @@ export default function Page() {
 
   const deportesSeleccionados = Object.keys(formData.deportesNivel);
 
+  /**
+   * Maneja el cambio de los campos del formulario de edición de perfil.
+   */
   const handleChange = <K extends keyof Omit<FormData, "deportesNivel">>(
     field: K,
     value: FormData[K]
@@ -76,6 +87,9 @@ export default function Page() {
     setFormData((prev) => ({ ...prev, [field]: value }));
   };
 
+  /**
+   * Procesa la selección del archivo de avatar y genera una vista previa.
+   */
   const handleAvatarUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -85,6 +99,9 @@ export default function Page() {
     reader.readAsDataURL(file);
   };
 
+  /**
+   * Sube el avatar seleccionado a Cloudinary y devuelve la URL pública.
+   */
   const uploadImage = async (file: File): Promise<string> => {
     const fd = new FormData();
     fd.append("file", file);
@@ -98,6 +115,9 @@ export default function Page() {
     return data.secure_url;
   };
 
+  /**
+   * Añade o quita un deporte seleccionado en el formulario de perfil.
+   */
   const toggleDeporte = (deporte: string) => {
     setFormData((prev) => {
       const next = { ...prev.deportesNivel };
@@ -112,6 +132,9 @@ export default function Page() {
     });
   };
 
+  /**
+   * Establece el nivel deportivo para un deporte seleccionado en el perfil.
+   */
   const setNivel = (deporte: string, nivel: number) => {
     setFormData((prev) => ({
       ...prev,
@@ -119,6 +142,9 @@ export default function Page() {
     }));
   };
 
+  /**
+   * Envía los cambios de perfil al backend y actualiza el usuario en el contexto.
+   */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (deportesSeleccionados.length === 0) {

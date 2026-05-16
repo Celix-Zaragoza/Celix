@@ -1,7 +1,19 @@
+/**
+ * @file users.controller.js
+ * @description Controlador de usuarios. Gestiona el perfil propio, perfiles públicos,
+ * relaciones de seguimiento, búsqueda y estadísticas de actividad.
+ */
+
 import { User, Post } from "../models/index.js";
 import mongoose from "mongoose";
 
-/** Formato público de usuario (sin datos sensibles) */
+/**
+ * Devuelve el formato público de un usuario, omitiendo datos sensibles.
+ * Incluye si el usuario autenticado ya le sigue.
+ * @param {object} user - Documento de usuario de Mongoose.
+ * @param {string|object} currentUserId - ID del usuario autenticado.
+ * @returns {object} Datos públicos del usuario.
+ */
 function userPublic(user, currentUserId) {
   return {
     id: user._id,
@@ -25,15 +37,19 @@ function userPublic(user, currentUserId) {
   };
 }
 
-// ── GET /users/me ─────────────────────────────────────────────────────────────
-
+/**
+ * Devuelve el perfil del usuario autenticado.
+ * @route GET /users/me
+ */
 export const getMe = (req, res) => {
   return res.json({ ok: true, user: userPublic(req.user, req.user._id) });
 };
 
-// ── PATCH /users/me ───────────────────────────────────────────────────────────
-
-
+/**
+ * Actualiza el perfil del usuario autenticado.
+ * Verifica que el alias no esté en uso y marca el perfil como completo si corresponde.
+ * @route PATCH /users/me
+ */
 export const updateMe = async (req, res, next) => {
   try {
     const { nombre, alias, edad, zona, bio, avatar, deportesNivel, nivelGeneral } = req.body;
@@ -70,8 +86,10 @@ export const updateMe = async (req, res, next) => {
   }
 };
 
-// ── GET /users/:id ────────────────────────────────────────────────────────────
-
+/**
+ * Devuelve el perfil público de un usuario por su ID.
+ * @route GET /users/:id
+ */
 export const getUserById = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id);
@@ -82,8 +100,10 @@ export const getUserById = async (req, res, next) => {
   }
 };
 
-// ── POST /users/:id/follow ────────────────────────────────────────────────────
-
+/**
+ * Sigue a un usuario. Actualiza las listas de siguiendo y seguidores de ambos usuarios.
+ * @route POST /users/:id/follow
+ */
 export const followUser = async (req, res, next) => {
   try {
     const targetId = req.params.id;
@@ -111,8 +131,10 @@ export const followUser = async (req, res, next) => {
   }
 };
 
-// ── DELETE /users/:id/follow ──────────────────────────────────────────────────
-
+/**
+ * Deja de seguir a un usuario. Actualiza las listas de siguiendo y seguidores de ambos usuarios.
+ * @route DELETE /users/:id/follow
+ */
 export const unfollowUser = async (req, res, next) => {
   try {
     const targetId = req.params.id;
@@ -127,8 +149,10 @@ export const unfollowUser = async (req, res, next) => {
   }
 };
 
-// ── GET /users/:id/followers ──────────────────────────────────────────────────
-
+/**
+ * Devuelve la lista de seguidores de un usuario.
+ * @route GET /users/:id/followers
+ */
 export const getFollowers = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id).populate("seguidores", "alias nombre avatar zona deportesNivel nivelGeneral");
@@ -139,8 +163,10 @@ export const getFollowers = async (req, res, next) => {
   }
 };
 
-// ── GET /users/:id/following ──────────────────────────────────────────────────
-
+/**
+ * Devuelve la lista de siguiendo de un usuario
+ * @route GET /users/:id/followers
+ */
 export const getFollowing = async (req, res, next) => {
   try {
     const user = await User.findById(req.params.id).populate("siguiendo", "alias nombre avatar zona deportesNivel nivelGeneral");
@@ -151,8 +177,10 @@ export const getFollowing = async (req, res, next) => {
   }
 };
 
-// ── GET /users/search?q= ──────────────────────────────────────────────────────
-
+/**
+ * Busca usuarios por alias o nombre mediante una búsqueda parcial case-insensitive.
+ * @route GET /users/search?q=
+ */
 export const searchUsers = async (req, res, next) => {
   try {
     const q = req.query.q?.trim();
@@ -178,8 +206,11 @@ export const searchUsers = async (req, res, next) => {
   }
 };
 
-// ── GET /users/:id/stats ─────────────────────────────────────────────────────
-
+/**
+ * Devuelve estadísticas de actividad del usuario autenticado: total de posts,
+ * likes recibidos, actividad de los últimos 7 días y distribución por deporte.
+ * @route GET /users/:id/stats
+ */
 export const getUserStats = async (req, res, next) => {
   try {
     const userId = new mongoose.Types.ObjectId(req.user._id);

@@ -1,5 +1,15 @@
+/**
+ * @file Conversation.js
+ * @description Modelos de conversación y mensaje para el sistema de mensajería privada.
+ * Una conversación agrupa exactamente dos participantes e incluye el seguimiento
+ * de mensajes no leídos por usuario.
+ */
+
 import mongoose from "mongoose";
 
+/**
+ * Esquema de un mensaje individual dentro de una conversación.
+ */
 const messageSchema = new mongoose.Schema(
   {
     conversacion: { type: mongoose.Schema.Types.ObjectId, ref: "Conversation", required: true, index: true },
@@ -18,6 +28,10 @@ const messageSchema = new mongoose.Schema(
 
 export const Message = mongoose.model("Message", messageSchema);
 
+/**
+ * Esquema de una conversación privada entre dos usuarios.
+ * Almacena el último mensaje, la fecha y un mapa de mensajes no leídos por participante.
+ */
 const conversationSchema = new mongoose.Schema(
   {
     participantes: {

@@ -1,3 +1,10 @@
+/**
+ * @file swagger.js
+ * @description Configuración de Swagger/OpenAPI para la documentación de la API.
+ * Define la información general, servidores, esquemas de seguridad y la ruta
+ * donde se escanean los comentarios JSDoc de las rutas.
+ */
+
 import swaggerJSDoc from "swagger-jsdoc";
 
 const swaggerDefinition = {

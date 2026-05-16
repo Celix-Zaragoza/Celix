@@ -1,19 +1,27 @@
-import mongoose from "mongoose";
+/**
+ * @file db.js
+ * @description Configuración y conexión a la base de datos MongoDB mediante Mongoose.
+ */
 
+import mongoose from "mongoose";
+import { logger } from "./logger.js";
+
+/**
+ * Establece la conexión con MongoDB usando la URI definida en las variables de entorno.
+ * Si la URI no está definida o la conexión falla, registra el error en el logger.
+ */
 export const connectDB = async () => {
   try {
     const uri = process.env.MONGO_URI;
     if (!uri) {
-      console.error("❌ MONGO_URI no está definida en variables de entorno");
+      logger.error("❌ MONGO_URI no está definida en variables de entorno");
       return; // o process.exit(1)
     }
 
     await mongoose.connect(uri);
 
-    console.log("✅ MongoDB conectado");
+    logger.info("✅ Conectado a MongoDB");
   } catch (error) {
-    console.error("❌ Error conectando MongoDB:", error.message);
-    // Si quieres que falle el deploy si no hay DB:
-    // process.exit(1);
+    logger.error("❌ Error conectando a MongoDB:", error);
   }
 };

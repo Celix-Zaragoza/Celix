@@ -1,13 +1,27 @@
+/**
+ * @file geminiService.js
+ * @description Servicio de integración con la API de Google Gemini.
+ * Proporciona reordenación inteligente del feed mediante IA generativa
+ * en función de los intereses deportivos del usuario.
+ */
+
 import { GoogleGenerativeAI } from "@google/generative-ai";
+import { logger } from "../config/logger.js";
 
 // Inicializar el cliente
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
 
-// services/geminiService.js
-
+/**
+ * Reordena una lista de posts usando IA para maximizar la relevancia
+ * según los deportes e intereses del usuario.
+ * @param {object[]} usuarioIntereses - Lista de deportes y niveles del usuario.
+ * @param {object[]} postsCandidatos - Lista de posts candidatos a reordenar.
+ * @returns {Promise<string[]|null>} Array de IDs de posts en el orden recomendado,
+ * o null si la IA falla (en cuyo caso se usa el orden original).
+ */
 export const reordenarFeedConIA = async (usuarioIntereses, postsCandidatos) => {
   try {
-    console.log("🧠 [Gemini Service] Enviando prompt a la IA...");
+    logger.info("🧠 [Gemini Service] Enviando prompt a la IA...");
 
     const model = genAI.getGenerativeModel({ model: "gemini-flash-latest" });
 
@@ -66,18 +80,18 @@ export const reordenarFeedConIA = async (usuarioIntereses, postsCandidatos) => {
     });
 
     const responseText = result.response.text();
-    console.log("📥 [Gemini Service] Respuesta RAW de la IA:", responseText);
+    logger.info("📥 [Gemini Service] Respuesta RAW de la IA:", responseText);
 
     const data = JSON.parse(responseText);
 
     if (data.orden_ids) {
-      console.log("📊 [Gemini Service] Ranking completado con éxito");
+      logger.info("📊 [Gemini Service] Ranking completado con éxito");
       return data.orden_ids;
     }
 
     return null;
   } catch (error) {
-    console.error("Error en Re-ranking Gemini:", error);
+    logger.error("Error en Re-ranking Gemini:", error);
     return null; // Fallback: si falla, devolveremos el orden original de la DB
   }
 };

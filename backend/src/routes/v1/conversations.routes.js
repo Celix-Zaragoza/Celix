@@ -1,4 +1,8 @@
-// backend/src/routes/v1/conversations.routes.js
+/**
+ * @file conversations.routes.js
+ * @description Rutas para la gestión de conversaciones y mensajes privados entre usuarios.
+ */
+
 import { Router } from "express";
 import {
   listConversations,

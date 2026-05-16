@@ -1,3 +1,8 @@
+/**
+ * Archivo: frontend/app/app/profile/[userId]/page.tsx
+ * Descripción: Perfil público de otro usuario con opción para seguir o dejar de seguir.
+ */
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,8 +12,11 @@ import { PublicationCard } from "../../../components/PublicationCard";
 import { MapPin, Calendar, MessageCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+/**
+ * Genera las cabeceras HTTP para peticiones autenticadas en el perfil de usuario.
+ */
 function authHeaders() {
   return {
     "Content-Type": "application/json",
@@ -16,6 +24,9 @@ function authHeaders() {
   };
 }
 
+/**
+ * Componente de página de /app/profile/[userId] que muestra un perfil ajeno.
+ */
 export default function Page() {
   const router = useRouter();
   const { user: me } = useAuth();
@@ -36,6 +47,9 @@ export default function Page() {
       return;
     }
 
+    /**
+     * Obtiene los datos del usuario solicitado por su identificador.
+     */
     const fetchUsuario = async () => {
       setLoading(true);
       try {
@@ -60,6 +74,9 @@ export default function Page() {
 
   useEffect(() => {
     if (!userId) return;
+    /**
+     * Recupera las publicaciones del usuario cuyo perfil se está visualizando.
+     */
     const fetchPosts = async () => {
       setLoadingPosts(true);
       try {
@@ -79,6 +96,9 @@ export default function Page() {
     fetchPosts();
   }, [userId]);
 
+  /**
+   * Cambia el estado de seguimiento del usuario actualmente visualizado.
+   */
   const handleToggleSeguir = async () => {
     if (!usuario) return;
     setLoadingFollow(true);

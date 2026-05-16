@@ -1,4 +1,9 @@
-// backend/src/controllers/admin.controller.js
+/**
+ * @file admin.controller.js
+ * @description Controlador de administración. Gestiona la moderación de publicaciones,
+ * usuarios y eventos, incluyendo el envío de notificaciones por email en cada acción.
+ */
+
 import { Post, User } from "../models/index.js";
 import { Event } from "../models/Event.js";
 import {
@@ -7,9 +12,15 @@ import {
   sendUserBlockedEmail,
   sendUserUnblockedEmail,
 } from "../services/email.service.js";
+import { logger } from "../config/logger.js";
 
 // ── PUBLICACIONES ─────────────────────────────────────────────────────────────
 
+/**
+ * Devuelve las publicaciones paginadas para moderación, pudiéndolos filtrar por contenido y estado.
+ * Incluye estadísticas del total de publicaciones visibles y ocultas.
+ * @route GET /admin/posts
+ */
 export const listPosts = async (req, res, next) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -44,6 +55,10 @@ export const listPosts = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+/**
+ * Oculta una publicación y notifica al autor por email.
+ * @route PATCH /admin/posts/:id/hide
+ */
 export const hidePost = async (req, res, next) => {
   try {
     const post = await Post.findOneAndUpdate(
@@ -59,13 +74,17 @@ export const hidePost = async (req, res, next) => {
         to: post.autor.email,
         nombre: post.autor.nombre,
         contenido: post.contenido,
-      }).catch(console.error);
+      }).catch(logger.error);
     }
     
     return res.json({ ok: true, post });
   } catch (err) { next(err); }
 };
 
+/**
+ * Restaura la visibilidad de una publicación y notifica al autor por email.
+ * @route PATCH /admin/posts/:id/restore
+ */
 export const restorePost = async (req, res, next) => {
   try {
     const post = await Post.findOneAndUpdate(
@@ -81,13 +100,17 @@ export const restorePost = async (req, res, next) => {
         to: post.autor.email,
         nombre: post.autor.nombre,
         contenido: post.contenido,
-      }).catch(console.error);
+      }).catch(logger.error);
     }
 
     return res.json({ ok: true, post });
   } catch (err) { next(err); }
 };
 
+/**
+ * Elimina lógicamente una publicación marcándola como eliminada y oculta.
+ * @route DELETE /admin/posts/:id
+ */
 export const deletePost = async (req, res, next) => {
   try {
     const post = await Post.findOneAndUpdate(
@@ -104,6 +127,11 @@ export const deletePost = async (req, res, next) => {
 
 // ── USUARIOS ──────────────────────────────────────────────────────────────────
 
+/**
+ * Devuelve los usuarios paginados para administración, pudiéndolos filtrar por nombre, alias,
+ * email y estado. Incluye estadísticas del total de usuarios activos y bloqueados.
+ * @route GET /admin/users
+ */
 export const listUsers = async (req, res, next) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -144,6 +172,11 @@ export const listUsers = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+/**
+ * Bloquea una cuenta de usuario y le notifica por email.
+ * No permite que un administrador se bloquee a sí mismo.
+ * @route PATCH /admin/users/:id/block
+ */
 export const blockUser = async (req, res, next) => {
   try {
     // ── Primero comprobar, luego actualizar ──
@@ -165,16 +198,20 @@ export const blockUser = async (req, res, next) => {
         nombre: user.nombre,
         motivo: req.body?.motivo ?? "No especificado",
       }).catch(err => {
-        console.error("Error al enviar email de bloqueo:", err);
+        logger.error("Error al enviar email de bloqueo:", err);
       });
     } else {
-      console.warn("No se pudo enviar el email: Función no definida o usuario sin correo.");
+      logger.warn("No se pudo enviar el email: Función no definida o usuario sin correo.");
     }
 
     return res.json({ ok: true, user });
   } catch (err) { next(err); }
 };
 
+/**
+ * Desbloquea una cuenta de usuario y le notifica por email.
+ * @route PATCH /admin/users/:id/unblock
+ */
 export const unblockUser = async (req, res, next) => {
   try {
     const user = await User.findByIdAndUpdate(
@@ -189,7 +226,7 @@ export const unblockUser = async (req, res, next) => {
       sendUserUnblockedEmail({
         to: user.email,
         nombre: user.nombre,
-      }).catch(console.error);
+      }).catch(logger.error);
     }
 
     return res.json({ ok: true, user });
@@ -198,6 +235,11 @@ export const unblockUser = async (req, res, next) => {
 
 // ── EVENTOS ───────────────────────────────────────────────────────────────────
 
+/**
+ * Devuelve los eventos paginados para moderación, filtrables por título y estado.
+ * Incluye estadísticas del total de eventos visibles y ocultos.
+ * @route GET /admin/events
+ */
 export const listEvents = async (req, res, next) => {
   try {
     const page = Math.max(1, parseInt(req.query.page) || 1);
@@ -228,6 +270,10 @@ export const listEvents = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+/**
+ * Oculta un evento de la plataforma.
+ * @route PATCH /admin/events/:id/hide
+ */
 export const hideEvent = async (req, res, next) => {
   try {
     const event = await Event.findByIdAndUpdate(
@@ -242,6 +288,10 @@ export const hideEvent = async (req, res, next) => {
   } catch (err) { next(err); }
 };
 
+/**
+ * Restaura la visibilidad de un evento.
+ * @route PATCH /admin/events/:id/restore
+ */
 export const restoreEvent = async (req, res, next) => {
   try {
     const event = await Event.findByIdAndUpdate(

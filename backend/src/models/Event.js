@@ -1,3 +1,10 @@
+/**
+ * @file Event.js
+ * @description Modelo de evento deportivo. Define el esquema de Mongoose con los datos
+ * importados desde el dataset público de Zaragoza, incluyendo ubicación, fechas,
+ * moderación y usuarios interesados.
+ */
+
 import mongoose from "mongoose";
 
 const eventSchema = new mongoose.Schema(
@@ -95,6 +102,7 @@ const eventSchema = new mongoose.Schema(
   }
 );
 
+// Virtual para obtener el número de usuarios interesados sin almacenarlo en BD
 eventSchema.virtual("numInteresados").get(function () {
   return this.interesados?.length ?? 0;
 });

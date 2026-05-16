@@ -1,3 +1,10 @@
+/**
+ * @file posts.controller.test.js
+ * @description Tests unitarios del controlador de publicaciones.
+ * Comprueba el feed global, feed de seguidos, creación, eliminación,
+ * likes y consulta de publicaciones por usuario.
+ */
+
 import { jest } from "@jest/globals";
 
 const postFindMock = jest.fn();

@@ -1,8 +1,17 @@
-// test-modelos.js
-//Fichero para saber que modelos de Gemini tengo disponibles con mi API Key, y cuáles sirven para generar contenido (generateContent)
+/**
+ * @file test-modelos.js
+ * @description Utilidad para listar los modelos de Gemini disponibles con la API Key configurada,
+ * filtrando únicamente los que soportan generación de contenido (generateContent).
+ */
 import dotenv from "dotenv";
+import { loggers } from "winston";
 dotenv.config();
 
+
+/**
+ * Consulta la API de Gemini y muestra por consola los modelos disponibles
+ * que soportan el método generateContent.
+ */
 async function listarModelos() {
   const apiKey = process.env.GEMINI_API_KEY;
   const url = `https://generativelanguage.googleapis.com/v1beta/models?key=${apiKey}`;
@@ -12,7 +21,7 @@ async function listarModelos() {
     const datos = await respuesta.json();
 
     if (datos.error) {
-      console.error("Error de la API:", datos.error.message);
+      loggers.error("Error de la API:", datos.error.message);
       return;
     }
 
@@ -21,10 +30,10 @@ async function listarModelos() {
       .filter((m) => m.supportedGenerationMethods.includes("generateContent"))
       .map((m) => m.name.replace("models/", "")); // Limpiamos el prefijo
 
-    console.log("✅ Modelos disponibles para tu API Key:");
-    console.table(modelosUtiles);
+    loggers.info("✅ Modelos disponibles para tu API Key:");
+    loggers.table(modelosUtiles);
   } catch (error) {
-    console.error("Error al conectar:", error);
+    loggers.error("Error al conectar:", error);
   }
 }
 

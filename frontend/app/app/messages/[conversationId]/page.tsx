@@ -1,3 +1,8 @@
+/**
+ * Archivo: frontend/app/app/messages/[conversationId]/page.tsx
+ * Descripción: Página de conversación individual para enviar y recibir mensajes.
+ */
+
 "use client";
 
 import { useEffect, useRef, useState, useCallback } from "react";
@@ -38,10 +43,16 @@ interface UsuarioBusqueda {
   avatar?: string;
 }
 
+/**
+ * Devuelve el participante opuesto en una conversación.
+ */
 function getOtherParticipant(conv: Conversacion, myId: string): Participante {
   return conv.participantes.find((p) => p.id !== myId) ?? conv.participantes[0];
 }
 
+/**
+ * Componente de página de /app/messages/[conversationId] para mostrar la conversación actual.
+ */
 export default function Page() {
   const router = useRouter();
   const params = useParams<{ conversationId: string }>();
@@ -69,6 +80,9 @@ export default function Page() {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [mensajes]);
 
+  /**
+   * Obtiene la lista de conversaciones disponibles para el usuario.
+   */
   const fetchConversaciones = useCallback(async () => {
     if (!token) return;
     try {
@@ -136,6 +150,9 @@ export default function Page() {
     return () => { socket.emit("leave:conversation", conversationId); };
   }, [conversationId, token]);
 
+  /**
+   * Envía un mensaje a la conversación activa a través del socket.
+   */
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
     if (!messageText.trim() || !conversationId || !token) return;
@@ -146,6 +163,9 @@ export default function Page() {
 
   useEffect(() => {
     if (!userSearch.trim() || !token) { setUserResults([]); return; }
+    /**
+     * Busca usuarios por texto para iniciar una nueva conversación.
+     */
     const timer = setTimeout(async () => {
       setSearchingUsers(true);
       try {
@@ -160,6 +180,9 @@ export default function Page() {
     return () => clearTimeout(timer);
   }, [userSearch, token, API]);
 
+  /**
+   * Inicia una nueva conversación con el usuario seleccionado.
+   */
   const handleStartConversation = async (userId: string) => {
     if (!token) return;
     try {

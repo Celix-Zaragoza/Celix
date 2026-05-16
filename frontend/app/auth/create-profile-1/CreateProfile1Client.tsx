@@ -1,3 +1,9 @@
+/**
+ * Archivo: frontend/app/auth/create-profile-1/page.tsx
+ * Descripción: Primera fase del registro de perfil. Captura datos demográficos básicos 
+ * (edad y zona) y los transmite a la siguiente fase vía URLSearchParams.
+ */
+
 "use client";
 
 import { useState } from "react";
@@ -6,10 +12,15 @@ import { Calendar, User } from "lucide-react";
 import { zonasZaragoza } from "../../data/mockData";
 import { toast } from "sonner";
 
+/**
+ * Componente cliente para el paso 1 de la creación de perfil.
+ * Recupera datos previos (nombre, email, alias) de la URL para no perder el flujo de registro.
+ */
 export default function CreateProfile1Client() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
+  // Recuperación de parámetros de la fase anterior (registro básico)
   const nombre = searchParams.get("nombre") ?? "";
   const email = searchParams.get("email") ?? "";
   const alias = searchParams.get("alias") ?? "";
@@ -19,10 +30,16 @@ export default function CreateProfile1Client() {
     zona: "",
   });
 
+  /**
+   * Actualiza el estado del formulario cuando cambian los inputs de texto o número.
+   */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }));
   };
 
+  /**
+   * Valida los datos de edad y zona, y redirige al paso 2 adjuntando toda la información recolectada.
+   */
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
 
@@ -37,6 +54,7 @@ export default function CreateProfile1Client() {
       return;
     }
 
+    // Construcción de la Query String para persistir los datos hacia el siguiente paso
     const qs = new URLSearchParams({
       nombre, email, alias,
       edad: String(edad),

@@ -1,3 +1,9 @@
+/**
+ * Archivo: frontend/app/app/feed/page.tsx
+ * Descripción: Página principal del feed en Celix con pestañas Para ti y Siguiendo.
+ *              Carga publicaciones según IA y seguimiento de usuarios.
+ */
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -7,8 +13,11 @@ import { PublicationCard } from "../../components/PublicationCard";
 import { Button } from "../../components/ui/button";
 import { Loader2, PlusCircle, Sparkles } from "lucide-react"; // Añadido Sparkles para el toque IA
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
+/**
+ * Genera las cabeceras HTTP necesarias para las peticiones autenticadas en /app/feed.
+ */
 function authHeaders() {
   return {
     "Content-Type": "application/json",
@@ -16,6 +25,9 @@ function authHeaders() {
   };
 }
 
+/**
+ * Componente de página de /app/feed que muestra los feeds Para ti y Siguiendo.
+ */
 export default function Page() {
   const router = useRouter();
   const { user } = useAuth();
@@ -33,6 +45,9 @@ export default function Page() {
   useEffect(() => {
     if (activeTab !== "para-ti") return;
     
+    /**
+     * Recupera los posts personalizados por IA para la pestaña "Para ti".
+     */
     const fetchParaTi = async () => {
       setLoadingParaTi(true);
       try {
@@ -59,6 +74,9 @@ export default function Page() {
   useEffect(() => {
     if (activeTab !== "siguiendo") return;
     
+    /**
+     * Recupera los posts de los usuarios que sigue el usuario actual.
+     */
     const fetchFollowing = async () => {
       setLoadingFollowing(true);
       try {

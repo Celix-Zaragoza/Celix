@@ -1,3 +1,8 @@
+/**
+ * Archivo: frontend/app/app/profile/page.tsx
+ * Descripción: Perfil del usuario actual con estadísticas y publicaciones.
+ */
+
 "use client";
 
 import { useEffect, useState } from "react";
@@ -10,10 +15,13 @@ import {
   PieChart, Pie, Cell,
 } from "recharts";
 
-const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001/api/v1";
+const API = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:3001";
 
 const COLORS = ["#13ec80", "#3b82f6", "#8b5cf6", "#ec4899", "#f59e0b", "#10b981"];
 
+/**
+ * Componente de página de /app/profile que muestra el perfil del usuario autenticado.
+ */
 export default function Page() {
   const { user, updateUser } = useAuth();
   const router = useRouter();
@@ -29,6 +37,10 @@ export default function Page() {
 
   useEffect(() => {
     if (!user?.id) return;
+
+    /**
+     * Obtiene las estadísticas del usuario actual para el dashboard de perfil.
+     */
     const fetchStats = async () => {
       try {
         const res = await fetch(`${API}/api/v1/users/me/stats`, {
@@ -46,6 +58,9 @@ export default function Page() {
   }, [user?.id]);
 
   useEffect(() => {
+    /**
+     * Refresca los datos del usuario autenticado desde el backend.
+     */
     const fetchMe = async () => {
       try {
         const res = await fetch(`${API}/api/v1/users/me`, {
@@ -64,6 +79,10 @@ export default function Page() {
 
   useEffect(() => {
     if (!user?.id) return;
+
+    /**
+     * Obtiene las publicaciones del usuario actualmente autenticado.
+     */
     const fetchPosts = async () => {
       setLoadingPosts(true);
       try {

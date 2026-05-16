@@ -1,7 +1,20 @@
+/**
+ * @file instalaciones.controller.js
+ * @description Controlador para la consulta de instalaciones deportivas de Zaragoza.
+ * Obtiene los datos desde la API pública municipal, convierte las coordenadas
+ * de UTM zona 30N a WGS84 y devuelve las instalaciones normalizadas.
+ */
+
 const ZARAGOZA_BASE = "https://www.zaragoza.es";
 const INSTALACIONES_URL = `${ZARAGOZA_BASE}/sede/servicio/equipamiento/basic/instalacion-deportiva-elemental.json`;
 
-// Conversión UTM zona 30N ETRS89 → WGS84 aproximada (válida para Zaragoza)
+/**
+ * Convierte coordenadas UTM zona 30N ETRS89 a WGS84 (lat/lng).
+ * La conversión es aproximada pero suficientemente precisa para el ámbito de Zaragoza.
+ * @param {number} easting - Coordenada Este en metros.
+ * @param {number} northing - Coordenada Norte en metros.
+ * @returns {{ lat: number, lng: number }} Coordenadas en formato WGS84.
+ */
 function utmToLatLng(easting, northing) {
   // Parámetros elipsoide GRS80
   const a = 6378137.0;
@@ -54,6 +67,12 @@ function utmToLatLng(easting, northing) {
   };
 }
 
+/**
+ * Transforma un elemento de la API de Zaragoza al formato de instalación de la aplicación.
+ * Filtra las coordenadas que no sean válidas para el área de Zaragoza.
+ * @param {object} item - Instalación en formato original de la API.
+ * @returns {object} Instalación normalizada.
+ */
 function normalizeInstalacion(item) {
   let coordenadas = { lat: null, lng: null };
 
@@ -79,6 +98,11 @@ function normalizeInstalacion(item) {
   };
 }
 
+/**
+ * Devuelve la lista de instalaciones deportivas de Zaragoza con coordenadas válidas.
+ * Consulta la API municipal con un timeout de 10 segundos.
+ * @route GET /instalaciones
+ */
 export const getInstalaciones = async (req, res, next) => {
   try {
     const controller = new AbortController();

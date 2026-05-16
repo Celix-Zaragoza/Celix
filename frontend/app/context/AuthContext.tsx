@@ -1,7 +1,16 @@
+/**
+ * Archivo: context/AuthContext.tsx
+ * Descripción: Contexto global de autenticación. Gestiona el estado del usuario,
+ * la persistencia de la sesión mediante tokens y provee métodos de control de acceso.
+ */
+
 "use client";
 
 import React, { createContext, useContext, useState, ReactNode, useEffect } from "react";
 
+/**
+ * Interfaz que define la estructura de un usuario en el sistema.
+ */
 export interface User {
   id: string;
   alias: string;
@@ -18,6 +27,9 @@ export interface User {
   isAdmin?: boolean;
 }
 
+/**
+ * Definición de los métodos y propiedades disponibles en el contexto.
+ */
 interface AuthContextType {
   user: User | null;
   login: (user: User) => void;
@@ -29,17 +41,27 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+/**
+ * Hook personalizado para acceder de forma sencilla al contexto de autenticación.
+ */
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) throw new Error("useAuth must be used within an AuthProvider");
   return context;
 };
 
+/**
+ * Proveedor del contexto que envuelve la aplicación (o parte de ella).
+ */
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true); // ← nuevo
+  const [loading, setLoading] = useState(true); // Controla el estado inicial de hidratación
 
   // ── Restaurar sesión al arrancar ──────────────────────────────────────────
+  /**
+   * Efecto de inicialización: comprueba si existe un token en localStorage
+   * y valida la identidad del usuario contra el backend al cargar la app.
+   */
   useEffect(() => {
     const restoreSession = async () => {
       const token = localStorage.getItem("token");
@@ -54,9 +76,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         );
         if (res.ok) {
           const data = await res.json();
+          // Mapeo dinámico: transformamos el rol del backend en un booleano isAdmin
           setUser({ ...data.user, isAdmin: data.user.rol === "ADMIN" });
         } else {
-          // Token inválido o expirado — limpiar
+          // Si el token es inválido, limpiamos para evitar bucles de error
           localStorage.removeItem("token");
         }
       } catch {
@@ -69,10 +92,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     restoreSession();
   }, []);
 
+  /**
+   * Establece el usuario en el estado global tras un login exitoso.
+   */
   const login = (userData: User) => {
     setUser(userData);
   };
 
+  /**
+   * Simulación/Manejo local de registro inicial antes de persistir datos adicionales.
+   */
   const register = async (userData: Partial<User>): Promise<boolean> => {
     const newUser: User = {
       id: Math.random().toString(36).slice(2, 11),
@@ -93,15 +122,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return true;
   };
 
+  /**
+   * Cierra la sesión eliminando el usuario del estado (el token se elimina manualmente en los componentes).
+   */
   const logout = () => setUser(null);
 
+  /**
+   * Permite actualizar parcialmente los datos del usuario en caliente (ej: cambiar avatar o bio).
+   */
   const updateUser = (userData: Partial<User>) => {
     setUser((prev) => (prev ? { ...prev, ...userData } : prev));
   };
 
   return (
     <AuthContext.Provider value={{ user, login, register, logout, updateUser, isAuthenticated: !!user }}>
-      {/* Mientras restaura la sesión no renderiza nada para evitar el flash */}
+      {/* Mientras se valida el token (loading), no renderizamos children.
+          Esto evita el efecto de "flash" donde se ve el login un segundo 
+          antes de redirigir al feed.
+      */}
       {loading ? null : children}
     </AuthContext.Provider>
   );

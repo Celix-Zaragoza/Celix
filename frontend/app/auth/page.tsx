@@ -1,3 +1,8 @@
+/**
+ * Archivo: /auth/page.tsx
+ * Descripción: Página de redirección inicial
+ *              Reenvía automáticamente al panel de login.
+ */
 "use client";
 
 import { useEffect } from "react";

@@ -1,3 +1,9 @@
+/**
+ * @file Post.js
+ * @description Modelo de publicación. Define el esquema de Mongoose con el contenido,
+ * metadatos deportivos, likes y flags de moderación.
+ */
+
 import mongoose from "mongoose";
 
 const postSchema = new mongoose.Schema(
@@ -23,7 +29,9 @@ const postSchema = new mongoose.Schema(
   }
 );
 
+// Virtual para obtener el número de likes sin almacenarlo en BD
 postSchema.virtual("numLikes").get(function () { return this.likes?.length ?? 0; });
+
 postSchema.index({ autor: 1, createdAt: -1 });
 postSchema.index({ deporte: 1, createdAt: -1 });
 postSchema.index({ oculto: 1, eliminado: 1, createdAt: -1 });

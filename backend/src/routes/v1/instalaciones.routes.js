@@ -1,3 +1,8 @@
+/**
+ * @file instalaciones.routes.js
+ * @description Rutas para la consulta de instalaciones deportivas de Zaragoza.
+ */
+
 import { Router } from "express";
 import { getInstalaciones } from "../../controllers/instalaciones.controller.js";
 import { requireAuth } from "../../middlewares/auth.middleware.js";

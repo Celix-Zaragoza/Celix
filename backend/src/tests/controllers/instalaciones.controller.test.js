@@ -1,3 +1,11 @@
+/**
+ * @file instalaciones.controller.test.js
+ * @description Tests unitarios del controlador de instalaciones deportivas.
+ * Comprueba la normalización y filtrado de coordenadas de los datos
+ * obtenidos desde la API pública de Zaragoza.
+ */
+
+
 import { jest } from "@jest/globals";
 
 const originalFetch = global.fetch;

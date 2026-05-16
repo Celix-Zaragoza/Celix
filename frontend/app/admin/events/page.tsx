@@ -1,3 +1,9 @@
+/**
+ * Archivo: /admin/events/page.tsx
+ * Descripción: Página de administración de eventos para el panel de admin de Celix.
+ *              Permite buscar, filtrar, sincronizar, ocultar y restaurar eventos.
+ */
+
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
@@ -27,6 +33,9 @@ interface Pagination {
   total: number;
 }
 
+/**
+ * Genera las cabeceras HTTP necesarias para las peticiones autenticadas al backend.
+ */
 function authHeaders() {
   return {
     "Content-Type": "application/json",
@@ -47,6 +56,9 @@ const selectWrap: React.CSSProperties = {
   overflow: "hidden",
 };
 
+/**
+ * Componente de página que renderiza la vista de administración de eventos.
+ */
 export default function Page() {
   const [eventos, setEventos] = useState<Evento[]>([]);
   const [pagination, setPagination] = useState<Pagination>({ page: 1, pages: 1, total: 0 });
@@ -66,8 +78,14 @@ export default function Page() {
     onConfirm: () => void;
   } | null>(null);
 
+  /**
+   * Cierra el modal de confirmación y limpia su estado.
+   */
   const closeModal = () => setModal(null);
 
+  /**
+   * Obtiene la lista de eventos desde el backend según filtros y página actual.
+   */
   const fetchEventos = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -92,6 +110,9 @@ export default function Page() {
   useEffect(() => { fetchEventos(); }, [fetchEventos]);
   useEffect(() => { setPage(1); }, [searchQuery, filterStatus]);
 
+  /**
+   * Sincroniza los eventos deportivos con el backend y actualiza la lista.
+   */
   const handleSync = async () => {
     setSyncing(true);
     try {
@@ -110,6 +131,9 @@ export default function Page() {
     }
   };
 
+  /**
+   * Muestra el modal de confirmación para ocultar un evento.
+   */
   const handleHide = (id: string) => {
     setModal({
       open: true,
@@ -129,6 +153,9 @@ export default function Page() {
     });
   };
 
+  /**
+   * Muestra el modal de confirmación para restaurar un evento oculto.
+   */
   const handleRestore = (id: string) => {
     setModal({
       open: true,
