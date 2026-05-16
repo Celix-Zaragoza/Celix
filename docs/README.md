@@ -280,11 +280,11 @@ Crea un archivo `.env` en `backend/` con:
 ```env
 PORT=3001
 NODE_ENV=development
-MONGO_URI="mongodb+srv://db_user:7naQrKIpHjYzgzSC@celix.dz9bsth.mongodb.net/celix?appName=Celix"
-JWT_SECRET=celix_super_secreto_2026
-EMAIL_USER=875301@unizar.es
-EMAIL_PASS=dsup jjko pjbd hbdc
-GEMINI_API_KEY=AIzaSyC9yf1XKmUPb4sO0QV5dpUk7UL34CrwuaQ
+MONGO_URI=mongodb+srv://<usuario>:<password>@<cluster>.mongodb.net/<nombre_bd>?appName=<app>
+JWT_SECRET=una_clave_secreta_larga_y_aleatoria
+EMAIL_USER=tucuenta@gmail.com
+EMAIL_PASS=xxxx xxxx xxxx xxxx
+GEMINI_API_KEY=tu_api_key_de_gemini
 FRONTEND_URL=http://localhost:3000
 ```
 
